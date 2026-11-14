@@ -1,0 +1,147 @@
+version: 1
+count: 18
+target: "15-25"
+references:
+  - id: aesop
+    file: aesop.md
+    title: Aesop
+    url: https://www.aesop.com
+    direction: quiet-luxury
+    job: buy a physical good
+    tags: [retail, paper, photography, square-corners, small-type, grotesk]
+
+  - id: cos
+    file: cos.md
+    title: COS
+    url: https://www.cos.com
+    direction: quiet-luxury
+    job: look at a garment
+    tags: [fashion, photography, architecture, factual-type, neutrals]
+
+  - id: are-na
+    file: are-na.md
+    title: Are.na
+    url: https://www.are.na
+    direction: quiet-luxury
+    job: collect and connect research
+    tags: [tool, defaultness, blocks, content-is-the-color, one-family]
+
+  - id: hermes
+    file: hermes.md
+    title: Hermès
+    url: https://www.hermes.com
+    direction: quiet-luxury
+    job: look at an object from the house
+    tags: [maison, photography, achromatic-chrome, square-corners, object-color]
+
+  - id: muji
+    file: muji.md
+    title: MUJI
+    url: https://www.muji.com
+    direction: quiet-luxury
+    job: choose a plain object
+    tags: [retail, label, material, no-signature-color, plain-pack]
+
+  - id: mubi
+    file: mubi.md
+    title: MUBI
+    url: https://mubi.com
+    direction: cinematic-dark
+    job: enter a film journal
+    tags: [film, bands, stills, square-corners, one-action-color, grotesk]
+
+  - id: resident-advisor
+    file: resident-advisor.md
+    title: Resident Advisor
+    url: https://ra.co
+    direction: cinematic-dark
+    job: find an event tonight
+    tags: [nightlife, listings, dense, black, red-signal, type-led]
+
+  - id: criterion
+    file: criterion.md
+    title: Criterion Collection
+    url: https://www.criterion.com
+    direction: cinematic-dark
+    job: choose a film from a library
+    tags: [film, library, spine-number, essay, stills, stable-frame]
+
+  - id: sonos
+    file: sonos.md
+    title: Sonos Now Playing
+    url: https://www.sonos.com
+    direction: cinematic-dark
+    job: see what is playing
+    tags: [listening, artwork, now-playing, one-work, caution]
+
+  - id: things-3
+    file: things-3.md
+    title: Things 3
+    url: https://culturedcode.com/things/
+    direction: precise-technical
+    job: see what to do today
+    tags: [tasks, rows, platform-type, one-compose, section-color]
+
+  - id: figma
+    file: figma.md
+    title: Figma editor
+    url: https://www.figma.com
+    direction: precise-technical
+    job: edit a design on a canvas
+    tags: [tool-chrome, panels, hairline, selection-color, compact-type]
+
+  - id: stripe-docs
+    file: stripe-docs.md
+    title: Stripe Docs
+    url: https://docs.stripe.com
+    direction: precise-technical
+    job: read and copy a technical document
+    tags: [docs, measure, toc, code-as-material, three-zones]
+
+  - id: ia-writer
+    file: ia-writer.md
+    title: iA Writer
+    url: https://ia.net/writer
+    direction: precise-technical
+    job: write the next sentence
+    tags: [writing, column, focus, one-family, chrome-leaves]
+
+  - id: teenage-engineering
+    file: teenage-engineering.md
+    title: Teenage Engineering
+    url: https://teenage.engineering
+    direction: precise-technical
+    job: inspect an instrument
+    tags: [instruments, labels, inspection, object, diagram]
+
+  - id: cereal
+    file: cereal.md
+    title: Cereal
+    url: https://readcereal.com
+    direction: editorial-print
+    job: read a photographic essay
+    tags: [magazine, photography, serif, space-as-hierarchy, archive]
+
+  - id: financial-times
+    file: financial-times.md
+    title: Financial Times
+    url: https://www.ft.com
+    direction: editorial-print
+    job: read the day's report
+    tags: [newspaper, salmon-paper, rules, numeric, size-as-rank]
+
+  - id: new-york-times
+    file: new-york-times.md
+    title: The New York Times
+    url: https://www.nytimes.com
+    direction: editorial-print
+    job: see what matters today
+    tags: [newspaper, front-page, position, rules, photography]
+
+  - id: monocle
+    file: monocle.md
+    title: Monocle
+    url: https://monocle.com
+    direction: editorial-print
+    job: take a briefing
+    tags: [magazine, briefing, sections, serif, dense]

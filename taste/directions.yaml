@@ -1,0 +1,137 @@
+version: 1
+directions:
+  - id: quiet-luxury
+    name: Quiet Luxury / High-end Minimal
+    temperature: warm paper, stone, or graphite. Never pure white with a saturated accent.
+    density: sparse to moderate. One object or one short text column earns a large margin.
+    type: a quiet grotesk for almost everything. A serif only if a single line needs a literary register. Regular weight. Modest sizes.
+    material: square or nearly square corners, hairlines, almost no shadow. Photography or the object carries warmth.
+    jobs:
+      - object retail
+      - hospitality
+      - culture
+      - studio or personal site
+      - a single product
+    refuses:
+      - gold-on-black
+      - Didot or Playfair as a luxury costume
+      - badge stickers
+      - a tinted icon above every sentence
+      - body text below 14px, even if a reference prints smaller
+    references:
+      - aesop
+      - cos
+      - are-na
+      - hermes
+      - muji
+    first_screen: >
+      A stable header with a wordmark and text links. Then one spread: a large
+      still of the object (or one text column, if the product is an idea) and a
+      narrow column with a factual label, a title at regular weight, one
+      specific paragraph, the price or fact, and one quiet action. No card
+      around that column.
+
+  - id: cinematic-dark
+    name: Cinematic Dark
+    temperature: a night room. Black or near-black is the room, not a theme toggle. Color comes from the work (a still, a poster, a red signal), plus at most one action color.
+    density: the subject is large. Controls are small and in a stable place. Listings can be dense if each row is a real event.
+    type: a grotesk with a point of view (caps, weight, or a heavy cut). A second family only for a credit line. Measure the title hard so it does not span the viewport.
+    material: square corners, full-bleed stills, bands or rows. The dark field is flat. Do not add a purple glow to make it "cinematic".
+    jobs:
+      - film or video
+      - music and nightlife
+      - a single listening or watching surface
+      - a catalog of works
+    refuses:
+      - a dark-mode form with indigo buttons
+      - gold foil
+      - gradient meshes
+      - glass cards floating on a glow
+      - a black background with no work on it
+    references:
+      - mubi
+      - resident-advisor
+      - criterion
+      - sonos
+    first_screen: >
+      One work occupies most of the first screen, or the first screen is a
+      night listing whose rows are the works. The title, a credit, and one
+      action sit on the work or in a hard column beside it. Chrome is a
+      wordmark and a few links. If you turn the still off, the page should look
+      like an empty room, not like a dashboard.
+
+  - id: precise-technical
+    name: Precise Technical
+    temperature: cool paper or a neutral gray step. Ink is near-black. Status colors are few and they mean a state.
+    density: moderate to dense. Repeated objects share a row height. The page is a tool, so margin is padding, not a gallery wall.
+    type: one grotesk for UI, one mono for identifiers. Sizes sit in a narrow range (12–20px) with weight and position doing the hierarchy. Links are ink with an underline, not a new hue, unless the product brand already has a link color.
+    material: 1px hairlines, 0–6px radius on controls only, rows flush. Shadow appears on an overlay, not on every row.
+    jobs:
+      - repeated decisions
+      - configuration
+      - documentation
+      - a data list or log
+      - a creation tool
+      - writing
+      - a machine you inspect part by part
+    refuses:
+      - four KPI cards above a table that repeats the same numbers
+      - a marketing hero on a tool
+      - rainbow status pills
+      - mono used as decoration on marketing sentences
+    references:
+      - things-3
+      - figma
+      - stripe-docs
+      - ia-writer
+      - teenage-engineering
+    first_screen: >
+      The name of the tool and the name of the collection (Revisions, Layers,
+      Today). Then the repeating object itself, in aligned rows or a document
+      column. A writing surface is the column with the library hidden. An
+      instrument page is one machine and a spec list aligned to it. Status is
+      a word. One filter or one compose control. No stat strip.
+
+  - id: editorial-print
+    name: Editorial Print
+    temperature: paper and ink. Photography supplies the other colors. Rules are 1px and the color of the ink or a soft gray.
+    density: a spread. Large space, a reading measure, captions smaller than body. An essay gets hierarchy from space. A newspaper front may use headline size, width, and position to rank stories.
+    type: a text serif for prose, a sans for captions, navigation, and credits. Ragged right. Body around 18px on screen. Do not justify on the web.
+    material: columns, rules, margin notes. No cards around paragraphs. Images bleed or sit in a clear grid. Corners on images are square.
+    jobs:
+      - essay
+      - magazine story
+      - catalog essay
+      - interview
+      - a newspaper front
+      - a briefing
+    refuses:
+      - a hero with a gradient scrim and a centered headline over every story
+      - pull quotes in a colored card
+      - a three-card "related" row as the whole idea
+      - drop caps plus three other display tricks on the same page
+    references:
+      - cereal
+      - financial-times
+      - new-york-times
+      - monocle
+    first_screen: >
+      A masthead in small type. An essay continues as a full image with a
+      factual caption, or a text column of about 65–72 characters with the
+      title only modestly larger than the body. A newspaper front ranks
+      several stories by headline size, column width, and position, on one
+      paper color, with rules instead of cards. Navigation is a section, a
+      search, or a few words, not a product bar of buttons.
+
+choose:
+  - If this screen is a long text, a story, a catalog essay, a briefing, or a front that ranks several stories, use editorial-print.
+  - If this screen is a tool for repeated decisions, data, configuration, or writing, use precise-technical. A machine you inspect part by part belongs here too.
+  - If this screen is a room for one work, a film, music, or night culture, use cinematic-dark. A listening surface is the room where the work is playing, not the app's home.
+  - If this screen presents an object, a place, or a slow brand as something to look at, use quiet-luxury.
+  - If two match, pick the job of this screen. A ceramics studio's article is editorial-print. The same studio's bowl page is quiet-luxury. The same studio's order list is precise-technical.
+  - Never blend all four into one screen. A product may use different directions on different screens. Keep type and color related; change density and structure with the job.
+
+register_note: >
+  Cinematic dark is not "the same UI with a dark palette". Quiet luxury is not
+  "the same UI with a serif and more margin". If the structure is still the
+  generic skeleton, you have not chosen a direction. You have themed a template.

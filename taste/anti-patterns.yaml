@@ -1,0 +1,177 @@
+version: 1
+source: taste/principles.md
+note: >
+  Named failures. If a screen matches, replace the structure.
+  Do not restyle the same skeleton with a different font.
+
+anti_patterns:
+  - id: skeleton.saas-landing
+    also_called: the generic agent landing
+    signals:
+      - Logo left, links, filled button on the right.
+      - Centered headline, often gradient or oversized, with a dek and two buttons.
+      - A row of gray customer logos.
+      - Three feature cards with an icon in a tinted square.
+      - A bento, testimonials, a three-column pricing table with the middle plan highlighted, an FAQ, a four-column footer.
+    why: This layout is the median of recent agent output. Visitors have learned to ignore it, so the product's actual offer never gets a form.
+    instead: Use the direction's first_screen in taste/directions.yaml. One subject, one action, real nouns.
+
+  - id: layout.dashboard-costume
+    signals:
+      - Left sidebar with a product name and a long nav.
+      - Four statistic cards in a row.
+      - A chart beside or above a table.
+      - A greeting such as "Good morning".
+    why: The page claims to be an instrument and reports numbers nobody opened the screen to see.
+    instead: Start on the repeating object (the revision, the task, the document). Put a number on that row if the number changes a decision.
+
+  - id: layout.equal-cards
+    signals:
+      - Unrelated ideas share one bordered container, one radius, and one shadow.
+      - The card is the layout, not the content.
+    why: Equal chrome tells the eye that equal things happened. They did not.
+    instead: A column with headings, or a grid of real repeated objects (products, films, files).
+
+  - id: layout.nested-cards
+    signals:
+      - A padded border inside a padded border, sometimes inside a modal.
+    why: Each box spends the page's only depth budget on a group that space could have made.
+    instead: A heading and a 1px hairline.
+
+  - id: layout.center-stack
+    signals:
+      - Headline, paragraph, buttons, and cards are all center-aligned.
+    why: The eye restarts on every line. Nothing accumulates into a column.
+    instead: One start edge. Center a single ceremonial title only.
+
+  - id: layout.bento-claims
+    signals:
+      - Uneven tiles containing similar marketing sentences.
+      - The grid could be shuffled without changing the story.
+    why: The bento borrows importance the sentences did not earn.
+    instead: One strong subject and a plain list, or a single column.
+
+  - id: color.aurora
+    signals:
+      - Purple-to-blue mesh or blurred orbs as the page background.
+      - Gradient text on the headline.
+      - A colored glow behind a card or button.
+    why: This is the current mark of generated UI. It replaces a subject with atmosphere.
+    instead: A flat tinted surface. Color belongs to a photograph, a product, or one state.
+
+  - id: color.indigo-default
+    signals:
+      - White or gray-50 background.
+      - Indigo or violet as the primary.
+      - Inter, Geist, or a similar default grotesk.
+      - No structural idea beyond the skeleton.
+    why: The combination is what models emit when they are asked for "clean SaaS".
+    instead: Change the structure first. Then choose temperature and type for the job.
+
+  - id: color.gold-on-black
+    signals:
+      - Pure black background.
+      - Gold or brass rules, dividers, or buttons.
+      - Playfair Display, Cormorant, or another high-contrast Didot as the luxury signal.
+    why: The costume says luxury without an object, a material, or a room.
+    instead: For an object, use warm paper and a quiet grotesk. For a night room, use the work itself as the color.
+
+  - id: color.rainbow-pills
+    signals:
+      - Every status is a saturated filled pill in a different hue.
+    why: The pills become the visual event. The words they contain stop mattering.
+    instead: A quiet hue plus the word, in a consistent column.
+
+  - id: type.three-voices
+    signals:
+      - A display face, a serif, a mono, and often a script on one screen.
+    why: The page is performing typography instead of speaking in one voice.
+    instead: Two families, each with a written role.
+
+  - id: type.all-caps-everything
+    signals:
+      - Small tracked capitals on navigation, labels, buttons, and eyebrows alike.
+    why: When everything is an eyebrow, nothing is a kicker. Caps also hurt reading speed.
+    instead: Sentence case. One tracked line on the page, or none.
+
+  - id: type.tiny-gray
+    signals:
+      - Body or meta set in a light gray that fails 4.5:1, defended as elegant.
+    why: Illegible text is not quiet. It is unfinished.
+    instead: Mute with size or weight one step, and keep the contrast ratio.
+
+  - id: material.gray-card-shadow
+    signals:
+      - Page background near gray-50.
+      - White cards with a large radius and a small shadow.
+      - The same pattern repeated down the page.
+    why: This is the default visual sentence of utility CSS. It has no material.
+    instead: Flat paper, a real margin, hairlines where groups need a boundary.
+
+  - id: material.glass-on-flat
+    signals:
+      - A backdrop-blur panel sitting on a gradient or a flat illustration.
+    why: Glass is a response to something moving or photographic behind it. Without that, it is a blur effect.
+    instead: A solid surface. Save blur for a control over a real image.
+
+  - id: material.icon-tile
+    signals:
+      - A feature row or grid of icon-in-tinted-square, short title, one sentence.
+    why: The tile is a placeholder for a feature that was never given a form.
+    instead: State the fact in a sentence, or show the object.
+
+  - id: motion.stagger-fade
+    signals:
+      - Sections start invisible and fade or slide in on load, often one after another.
+    why: The page delays the content to look dynamic. It reads as a template behavior.
+    instead: Show the content. Animate the next change the user causes.
+
+  - id: motion.hover-lift
+    signals:
+      - Cards scale up and gain a shadow on hover.
+    why: The hover announces that the card is a card. It does not help the choice.
+    instead: Change ink, underline, or hairline.
+
+  - id: content.fake-proof
+    signals:
+      - A row of gray logos.
+      - A number such as "10,000+ teams" with no source.
+      - Testimonials with stock portraits and vague praise.
+    why: Invented proof is less believable than silence, and it looks generated.
+    instead: One real fact (a place, a number you can stand behind, a named customer) or nothing.
+
+  - id: content.abstract-verbs
+    signals:
+      - Headlines built from Elevate, Unlock, Seamless, Next-gen, Supercharge, Delightful, "your workflow".
+    why: These verbs have no subject. They fit every product, so they describe none.
+    instead: The noun a customer would repeat. "Ash glaze, 18 cm." "Retry delay on the preview proxy."
+
+  - id: chrome.two-primaries
+    signals:
+      - Two filled buttons side by side.
+    why: The page refuses to choose, so the visitor has to.
+    instead: One filled action and one text action.
+
+  - id: chrome.badge-pile
+    signals:
+      - Several of New, AI, Pro, Beta, Hot on a single title.
+    why: The badges are doing the advertising the title failed to do.
+    instead: One fact, written into the title or the line under it.
+
+  - id: chrome.sparkle
+    signals:
+      - A sparkle or wand icon as the symbol of the feature, often next to the word AI.
+    why: The icon is a genre marker. It does not depict the product.
+    instead: The object's shape, the data's shape, or no icon.
+
+  - id: a11y.placeholder-label
+    signals:
+      - An input whose only name is placeholder text.
+    why: The name disappears as soon as someone types, and it usually fails contrast.
+    instead: A visible label that stays.
+
+  - id: a11y.focus-removed
+    signals:
+      - outline: none, or an equivalent, with no focus-visible replacement.
+    why: Keyboard users cannot see where they are. The page also looks broken when it is tabbed, which it will be.
+    instead: A 2px offset ring in ink or the accent, designed once.

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ash glaze, eighteen centimetres — Rowan Clay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Public+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --surface: #f3efe6;
+      --ink: #1c1915;
+      --muted: #5c564c;
+      --line: #ddd4c6;
+      --accent: #7a3e2e;
+      --well: #cfc3b2;
+      --bowl: #efe6d8;
+      --rim: #f6f1e8;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: "Public Sans", system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+    }
+
+    .skip {
+      position: absolute;
+      left: 16px;
+      top: -48px;
+      background: var(--ink);
+      color: var(--surface);
+      padding: 8px 12px;
+      z-index: 2;
+    }
+
+    .skip:focus { top: 16px; }
+
+    :focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    a { color: inherit; }
+
+    .page {
+      width: min(1120px, calc(100% - max(40px, 12vw)));
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 24px;
+      padding: 32px 0 0;
+    }
+
+    .mark {
+      font-family: Newsreader, "Iowan Old Style", Palatino, Georgia, serif;
+      font-size: 22px;
+      font-weight: 400;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+
+    nav { display: flex; gap: 24px; }
+
+    nav a {
+      font-size: 14px;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 4px;
+    }
+
+    .spread {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 64px;
+      align-items: start;
+      padding: 48px 0 0;
+    }
+
+    figure { margin: 0; }
+
+    .well {
+      background: var(--well);
+      aspect-ratio: 36 / 25;
+      display: grid;
+      place-items: center;
+    }
+
+    .well svg { width: min(88%, 520px); height: auto; }
+
+    figcaption {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .copy { padding-top: 8px; max-width: 38rem; }
+
+    .kicker {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Newsreader, "Iowan Old Style", Palatino, Georgia, serif;
+      font-size: clamp(32px, 4vw, 40px);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.015em;
+    }
+
+    .lede { margin: 16px 0 0; }
+
+    .buy {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px 20px;
+      margin: 24px 0 0;
+    }
+
+    .price {
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+    }
+
+    .action {
+      font-weight: 500;
+      text-underline-offset: 4px;
+    }
+
+    dl { margin: 32px 0 0; }
+
+    dl div {
+      display: grid;
+      grid-template-columns: 7.5rem 1fr;
+      gap: 16px;
+      padding: 12px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    dl div:last-child { border-bottom: 1px solid var(--line); }
+
+    dt { margin: 0; color: var(--muted); font-size: 14px; }
+
+    dd { margin: 0; }
+
+    .firing {
+      max-width: 62ch;
+      margin: 96px 0 0;
+    }
+
+    h2 {
+      margin: 0;
+      font-family: Newsreader, "Iowan Old Style", Palatino, Georgia, serif;
+      font-size: 28px;
+      font-weight: 400;
+      line-height: 1.2;
+    }
+
+    .firing p { margin: 16px 0 0; }
+
+    #reserve:target {
+      box-shadow: inset 2px 0 0 var(--ink);
+      padding-left: 12px;
+    }
+
+    footer {
+      margin: 96px 0 48px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 800px) {
+      .spread { grid-template-columns: 1fr; gap: 32px; padding-top: 32px; }
+      .firing, footer { margin-top: 64px; }
+      header { align-items: start; }
+      nav { flex-direction: column; gap: 8px; align-items: flex-end; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to the bowl</a>
+  <div class="page">
+    <header>
+      <a class="mark" href="#top">Rowan Clay</a>
+      <nav aria-label="Studio">
+        <a href="#firing">The firing</a>
+        <a href="#visit">Visit</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <article class="spread">
+        <figure>
+          <div class="well">
+            <svg viewBox="24 168 352 240" role="img" aria-label="Wide stoneware bowl with a single ash-glaze line, seen from a low three-quarter angle">
+              <ellipse cx="200" cy="392" rx="74" ry="8" fill="#c4b6a4"/>
+              <path d="M158 348h84l10 22H148z" fill="#e5d9c6" stroke="#1c1915" stroke-width="1.6" stroke-linejoin="round"/>
+              <path d="M46 214c8 78 52 136 154 142 102-6 146-64 154-142" fill="#efe6d8" stroke="#1c1915" stroke-width="1.6"/>
+              <ellipse cx="200" cy="214" rx="154" ry="36" fill="#f4efe4" stroke="#1c1915" stroke-width="1.6"/>
+              <path d="M86 226c48 34 128 32 214-14" fill="none" stroke="#7a3e2e" stroke-width="2.4" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <figcaption>Bowl 18, ash glaze. Maryhill, 2026.</figcaption>
+        </figure>
+
+        <div class="copy">
+          <p class="kicker">Stoneware</p>
+          <h1>Ash glaze, eighteen centimetres</h1>
+          <p class="lede">Thrown on a kick wheel in Maryhill. The glaze is ash from the studio stove, over a speckled stoneware. Rims move a little from bowl to bowl. About nine hundred millilitres. Dishwasher safe. This firing ships in a week.</p>
+          <p class="buy">
+            <span class="price">£68</span>
+            <a class="action" href="#reserve">Reserve from this firing</a>
+          </p>
+          <dl>
+            <div><dt>Clay</dt><dd>Speckled stoneware</dd></div>
+            <div><dt>Glaze</dt><dd>Stove ash</dd></div>
+            <div><dt>Width</dt><dd>18 cm</dd></div>
+            <div><dt>Volume</dt><dd>900 ml</dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <section class="firing" id="firing">
+        <h2>This firing</h2>
+        <p>The ash pool is darker where the flame sat longer. We do not sand that out. If you want a matched set, write and we will pull neighbours from the same kiln.</p>
+        <p id="reserve">Reservations are for Bowl 18 in this firing. A shop would take the order here. This page is a static example, so the link stops on this note.</p>
+      </section>
+    </main>
+
+    <footer id="visit">Maryhill, Glasgow. Visit by appointment.</footer>
+  </div>
+</body>
+</html>

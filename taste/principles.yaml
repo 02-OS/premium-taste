@@ -1,0 +1,381 @@
+version: 1
+source: taste/principles.md
+note: >
+  Normative tests. The prose in principles.md is the reasoning.
+  Cite these ids in a critique. Every id appears in principles.md.
+
+rules:
+  - id: hierarchy.one-job
+    dimension: hierarchy
+    rule: The screen has one job. The first screen only performs that job or identifies the place.
+    test: The job sentence needs the word "and" twice.
+    fix: Split the view, or move the second job below the first screen.
+
+  - id: hierarchy.one-primary-action
+    dimension: hierarchy
+    rule: One primary action per view. Any other action is text, a link, or overflow.
+    test: More than one filled button in the first screen.
+    fix: Keep the action that completes the job. Demote the other to text.
+
+  - id: hierarchy.three-levels
+    dimension: hierarchy
+    rule: Three text levels only. Subject, support, meta.
+    test: A text style needs a fourth category to describe it.
+    fix: Promote it to a real heading, or delete the extra style.
+
+  - id: hierarchy.first-screen
+    dimension: hierarchy
+    rule: The first viewport shows the place, the subject, and the primary action.
+    test: Covering everything below about 700px of height hides the subject or the action.
+    fix: Move the action up and cut the introduction or the logo strip.
+
+  - id: hierarchy.alignment
+    dimension: hierarchy
+    rule: One start edge for a text column. Numeric columns align. Icons share a column.
+    test: Title, body, and button start at different edges with no grid reason.
+    fix: Snap the column to one edge.
+
+  - id: hierarchy.center-is-ceremonial
+    dimension: hierarchy
+    rule: Centering is for one ceremonial moment, not for product UI, forms, lists, or prose.
+    test: More than one centered block on a page that is not a poster.
+    fix: Align to the start edge. Keep at most one centered moment.
+
+  - id: hierarchy.grayscale-test
+    dimension: hierarchy
+    rule: Hierarchy remains visible without color.
+    test: In grayscale the title or the primary action disappears.
+    fix: Give the action position or weight, and the title size. Then restore color.
+
+  - id: spacing.scale
+    dimension: spacing
+    rule: Gaps come from a small scale (4, 8, 12, 16, 24, 32, 48, 64, 96). Off-scale values are 1–2px optical corrections.
+    test: More than seven distinct gaps, or a gap like 13 or 22 with no optical reason.
+    fix: Snap gaps to the scale.
+
+  - id: spacing.proximity
+    dimension: spacing
+    rule: Inner gaps are smaller than gaps between siblings, which are smaller than gaps between sections.
+    test: An outer gap is less than or equal to the inner gap of the same group.
+    fix: Tighten inside and open outside. Do not add a box to fake the group.
+
+  - id: spacing.section-jump
+    dimension: spacing
+    rule: The section gap is visibly larger than the in-group gap, at least twice.
+    test: At a squint the page is one even stack of similar rectangles.
+    fix: Widen the section gap or remove the rectangles.
+
+  - id: spacing.nested-padding
+    dimension: spacing
+    rule: Page margin, section inset, and card padding are not the same number.
+    test: Those three values are equal.
+    fix: Let the page own the margin and the group a smaller inset. Remove the card if it has no job.
+
+  - id: spacing.measure
+    dimension: spacing
+    rule: Body lines stay near 60–75 characters. Headlines do not span a wide canvas. Fields are narrower than the page.
+    test: A body line longer than about 80 characters, or a one-line headline spanning the viewport.
+    fix: Cap the column and leave the margin empty.
+
+  - id: spacing.full-bleed
+    dimension: spacing
+    rule: Only a deliberate bleed (image, rule, band) touches the viewport edge.
+    test: Something is cut off by the edge without being a committed bleed.
+    fix: Restore the margin, or bleed on purpose and align the caption to the column.
+
+  - id: color.budget
+    dimension: restraint
+    rule: Palette is surface, ink, muted ink, hairline, one accent, plus semantic colors that already have a meaning.
+    test: More than one accent hue besides the semantic set.
+    fix: Recast extras as neutrals or delete them.
+
+  - id: color.temperature
+    dimension: restraint
+    rule: All neutrals share one temperature.
+    test: Background, border, and muted text do not look like the same family.
+    fix: Mix hairline and muted ink from the surface and the ink.
+
+  - id: color.accent-rarity
+    dimension: restraint
+    rule: The accent marks one action, one state, or the selection. Not every icon and link.
+    test: More than three accent-colored elements in the first screen, unless they are repeated instances of one state.
+    fix: Return links and icons to ink.
+
+  - id: color.no-aurora
+    dimension: restraint
+    rule: No mesh backgrounds, gradient text, or glow. A gradient is allowed only as light on a real material.
+    test: Removing the gradient does not hurt a real material, or the gradient is the brand.
+    fix: Use a flat surface and put color in the content.
+
+  - id: color.dark-surfaces
+    dimension: restraint
+    rule: A dark screen uses lifted surfaces, off-white text, and content as the source of color.
+    test: The dark page is an inverted light page, or the only color is a glow.
+    fix: Redesign the night surfaces. Let the work or the status word carry color.
+
+  - id: color.contrast
+    dimension: restraint
+    rule: Body text at least 4.5:1. Large text and meaningful boundaries at least 3:1.
+    test: Muted body text under 4.5:1, or a state-only border under 3:1.
+    fix: Darken the muted ink, or quiet the text with size and weight while keeping the ratio.
+
+  - id: color.semantic-quiet
+    dimension: restraint
+    rule: Status colors are few, dull, consistent, and paired with a word. Danger is for destruction and real errors.
+    test: Status is a rainbow of filled pills, or red is both brand and error.
+    fix: Use a word plus a small mark, one hue per state.
+
+  - id: type.two-families
+    dimension: restraint
+    rule: At most two type families. Weights and italics are not extra families.
+    test: Three or more families.
+    fix: Move the extra role to a weight or a size of a family already in use.
+
+  - id: type.roles
+    dimension: restraint
+    rule: Each family has one role. Display stays out of controls and long text. Mono stays out of marketing sentences.
+    test: A family appears outside its role.
+    fix: Restyle that text in the family that owns the role.
+
+  - id: type.scale-jumps
+    dimension: hierarchy
+    rule: Adjacent text styles are the same or clearly different. A 2px ladder is one style.
+    test: Adjacent styles are within 2px and the same weight, and both remain.
+    fix: Collapse them, or separate them by a real step.
+
+  - id: type.leading-and-measure
+    dimension: hierarchy
+    rule: Labels about 1.25–1.4, body about 1.45–1.6, display about 0.95–1.2. Measure follows spacing.measure.
+    test: Heading leading is loose, body leading is tight, or the line is wider than the measure.
+    fix: Set leading for the role and cap the line length.
+
+  - id: type.weight-budget
+    dimension: restraint
+    rule: Two or three weights. No hairline weight below 16px. Bold is emphasis.
+    test: Four or more weights, or a light weight under 16px.
+    fix: Map extras back to regular or medium.
+
+  - id: type.tracking
+    dimension: restraint
+    rule: Negative tracking only on large grotesk headlines. Positive tracking on at most one eyebrow.
+    test: More than one tracked or all-caps label in the first screen.
+    fix: Sentence case. Keep a single kicker or delete it.
+
+  - id: type.numbers
+    dimension: hierarchy
+    rule: Numeric columns use tabular figures and a shared alignment.
+    test: Digits in a column shift horizontally as values change.
+    fix: Use tabular-nums and right-align or decimal-align the column.
+
+  - id: type.license
+    dimension: product-fit
+    rule: Do not ship an unlicensed commercial font. Name the substitute.
+    test: A commercial family is named with no license and no font files.
+    fix: Switch to an open face or a system stack and record the intended voice.
+
+  - id: type.avoid-tells
+    dimension: uniqueness
+    rule: >
+      Do not introduce Inter, Geist, Space Grotesk, Satoshi, Cabinet Grotesk,
+      Clash Display, Plus Jakarta Sans, DM Sans, Instrument Serif, Instrument Sans,
+      Playfair Display, or Cormorant Garamond unless the brand already uses that face.
+    test: One of those faces is newly introduced and is not in the brand guide.
+    fix: Use a system stack or a quieter open face (Newsreader, Public Sans, Source Serif 4, Source Sans 3, IBM Plex, Literata, Schibsted Grotesk). Fix the layout first.
+
+  - id: density.match-job
+    dimension: product-fit
+    rule: Density matches the job and the direction's density line.
+    test: A tool has marketing scale, or a brand page has tool-scale metadata as its whole structure, with no reason.
+    fix: Change the structure to the job.
+
+  - id: density.not-cramped
+    dimension: spacing
+    rule: Dense layouts keep one row height, one inset, and separated lines.
+    test: Row height or row padding varies for no content reason.
+    fix: One row height and one horizontal inset.
+
+  - id: density.not-empty
+    dimension: uniqueness
+    rule: Space is earned by a subject, not by a small card in a void.
+    test: Removing chrome and gradient leaves nothing that deserves the margin.
+    fix: Bring in the real subject at a size that holds the page.
+
+  - id: density.repeat-rhythm
+    dimension: spacing
+    rule: Repeated objects share one template. Content varies; chrome does not.
+    test: Sibling items differ in padding, radius, or title size.
+    fix: One template.
+
+  - id: density.no-bento-default
+    dimension: uniqueness
+    rule: Uneven tiles require unequal content. Equal claims do not get a bento.
+    test: Tiles could be reordered without changing meaning and say similar things.
+    fix: Use a list, or one strong tile and a plain list.
+
+  - id: material.one-system
+    dimension: restraint
+    rule: One depth system. At most two separation devices among border, tone step, shadow, and blur.
+    test: More than two of those devices separate regions.
+    fix: Keep the device that matches the direction.
+
+  - id: material.shadow-budget
+    dimension: restraint
+    rule: One shadow style, only on overlays and dragged objects.
+    test: In-flow cards, buttons, or sections have shadows.
+    fix: Remove in-flow shadows. Keep one overlay shadow.
+
+  - id: material.no-nested-cards
+    dimension: restraint
+    rule: Nested padded boxes are only real navigation layers.
+    test: Two bordered, padded containers are nested for decoration.
+    fix: Flatten to a heading and a hairline.
+
+  - id: material.radius
+    dimension: restraint
+    rule: One radius language for the direction. Sibling containers match.
+    test: Button, card, input, and image use unrelated radii.
+    fix: Square page geometry or the direction's radius, plus one control radius.
+
+  - id: material.image-or-type
+    dimension: uniqueness
+    rule: Abstract blobs and gradient orbs do not occupy the subject slot.
+    test: A generic 3D shape, orb, or isometric blob is the subject.
+    fix: Use a real image, a product-specific diagram, or type and space.
+
+  - id: material.hairline-before-box
+    dimension: restraint
+    rule: Separate with space, then a 1px hairline, then a tone step. A box is for a true object or an overlay.
+    test: Every group is a bordered card and the groups are not repeated objects.
+    fix: Remove the box.
+
+  - id: motion.purpose
+    dimension: restraint
+    rule: Motion marks a state change or live data. Otherwise the screen is still.
+    test: An element moves on load or on a timer without live data.
+    fix: Remove it. Use a layout-matched skeleton if the load is slow.
+
+  - id: motion.timing
+    dimension: restraint
+    rule: 120–180ms for state, 200–320ms for overlays, 400–700ms only when the motion is the content. No bounce.
+    test: A menu exceeds 320ms or uses bounce, elastic, or overshoot.
+    fix: Shorten it. Use ease-out for entrances and ease-in for exits.
+
+  - id: motion.no-load-theater
+    dimension: restraint
+    rule: Content is readable immediately. No staggered entrance and no typewriter.
+    test: Content stays invisible until an entrance finishes.
+    fix: Render the content. Animate the next user-caused change only.
+
+  - id: motion.reduced
+    dimension: accessibility
+    rule: prefers-reduced-motion removes transforms and long fades.
+    test: The page animates and has no reduced-motion path.
+    fix: Make those changes instant, or opacity under 150ms.
+
+  - id: motion.hover
+    dimension: restraint
+    rule: Hover changes color, underline, or hairline. It does not lift, scale, and shadow a card.
+    test: Hover sets transform or box-shadow on in-flow cards.
+    fix: Change ink or hairline only.
+
+  - id: uniqueness.one-idea
+    dimension: uniqueness
+    rule: The page's structure can be named in one sentence.
+    test: The sentence turns into a feature list.
+    fix: Keep the idea that serves the job and delete the other sections.
+
+  - id: uniqueness.refuse-skeleton
+    dimension: uniqueness
+    rule: Refuse skeleton.saas-landing and layout.dashboard-costume unless that structure is honestly the product.
+    test: The first screen matches the hero plus the three feature cards, or the stat-card dashboard, without a real subject.
+    fix: Rebuild from the direction's first_screen recipe.
+
+  - id: uniqueness.specific-copy
+    dimension: uniqueness
+    rule: Copy uses concrete nouns from this product, not Elevate, Unlock, Seamless, Next-gen, or "your workflow".
+    test: The headline and first paragraph could sit on a hundred other sites.
+    fix: Replace them with the fact a customer uses to decide.
+
+  - id: uniqueness.one-detail
+    dimension: uniqueness
+    rule: One crafted detail, related to the product. Not a stack of effects.
+    test: Two or more of gradient, blob, custom cursor, staggered motion, costume font, glow.
+    fix: Keep the one that carries meaning.
+
+  - id: uniqueness.diverge-from-reference
+    dimension: uniqueness
+    rule: A reference lends a structure. The product changes content and at least one real decision.
+    test: Only the logo and palette differ from the reference or a template.
+    fix: Rebuild around this product's object or data.
+
+  - id: product.sentence
+    dimension: product-fit
+    rule: "Write: This is a [job] for [who], and it should feel like [reference], because [structural reason]."
+    test: The because-clause is only a mood word.
+    fix: Name a structure.
+
+  - id: product.direction-serves-job
+    dimension: product-fit
+    rule: The direction's jobs include this screen, or the mismatch is written down.
+    test: A form or data table is cinematic-dark, or an object page is a data table, with no stated reason.
+    fix: Switch direction for this screen, or write the reason.
+
+  - id: product.two-registers
+    dimension: product-fit
+    rule: Marketing and the working product may differ in density. They share temperature and type. They do not share a hero.
+    test: The app's first screen is the marketing hero, shrunk.
+    fix: Start the app on the repeating object or the document.
+
+  - id: product.precedence
+    dimension: product-fit
+    rule: User instruction, then brand color and type, then these principles for structure and restraint.
+    test: An explicit brand color was overridden, or an explicit request to remove a generic hero was ignored.
+    fix: Restore the winner in the precedence list and say which rule you followed.
+
+  - id: a11y.contrast
+    dimension: accessibility
+    rule: The contrast bar in color.contrast also covers placeholders, disabled text that must be read, and text on images.
+    test: Muted text, placeholder, or text-on-image is under the ratio.
+    fix: Darken, put type on a solid ground, or move type off the image.
+
+  - id: a11y.focus
+    dimension: accessibility
+    rule: Every control shows a focus ring at least 2px, offset, in ink or accent.
+    test: Tabbing reaches a control that does not show focus.
+    fix: Add a :focus-visible ring. Do not remove outlines without a replacement.
+
+  - id: a11y.targets
+    dimension: accessibility
+    rule: Targets are at least 24px, 40px for a primary touch control. Dense tool rows may be 32px with a keyboard path.
+    test: A clickable row or icon is under 24px.
+    fix: Expand the hit area without enlarging the glyph.
+
+  - id: a11y.size
+    dimension: accessibility
+    rule: Reading text is at least 14px. Long-form is at least 16px. Meta may be 12–13px only at 4.5:1 and never as the action.
+    test: A paragraph or an action is under 14px.
+    fix: Raise the size.
+
+  - id: a11y.not-color-alone
+    dimension: accessibility
+    rule: State is a word or a mark plus color.
+    test: Removing color leaves sold out, failed, selected, or required ambiguous.
+    fix: Add the word or marker in a consistent place.
+
+  - id: a11y.names
+    dimension: accessibility
+    rule: The accessible name says what the control does. A placeholder is not the only label.
+    test: The accessible name is "button", an icon name, or only a placeholder.
+    fix: Add a visible label or an accessible name that matches the visible text.
+
+  - id: a11y.errors
+    dimension: accessibility
+    rule: Errors sit at the field, say what to do, and are not color alone.
+    test: A red border with no message, or a generic toast when the cause is known.
+    fix: Put a specific instruction next to the field.
+
+  - id: a11y.order
+    dimension: accessibility
+    rule: Tab order follows visual order.
+    test: Tabbing jumps away from the visual sequence.
+    fix: Match the DOM to the visual order.

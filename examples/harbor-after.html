@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Revisions — Harbor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --surface: #f5f5f2;
+      --raised: #ffffff;
+      --ink: #1b1d1c;
+      --muted: #4e5450;
+      --line: #e2e3dc;
+      --shipped: #1e5c40;
+      --failed: #8f2d1f;
+      --building: #8a5a12;
+      --row: #eeeee8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .skip {
+      position: absolute;
+      left: 16px;
+      top: -48px;
+      background: var(--ink);
+      color: var(--surface);
+      padding: 8px 12px;
+    }
+
+    .skip:focus { top: 16px; }
+
+    :focus-visible {
+      outline: 2px solid var(--ink);
+      outline-offset: 2px;
+    }
+
+    a { color: inherit; }
+
+    .page { padding: 24px; max-width: 1100px; }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 16px;
+    }
+
+    .product {
+      font-weight: 500;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    h1 {
+      margin: 24px 0 0;
+      font-size: 20px;
+      font-weight: 500;
+      line-height: 1.3;
+    }
+
+    .where { margin: 4px 0 0; color: var(--muted); }
+
+    form {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 24px 0 8px;
+    }
+
+    label { font-size: 12px; font-weight: 500; }
+
+    input {
+      font: inherit;
+      color: inherit;
+      background: var(--raised);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      height: 32px;
+      padding: 0 10px;
+      min-width: min(280px, 100%);
+    }
+
+    .list { margin-top: 8px; }
+
+    .row {
+      display: grid;
+      grid-template-columns: 112px 96px minmax(0, 1fr) 130px 72px;
+      gap: 12px;
+      align-items: baseline;
+      min-height: 40px;
+      padding: 8px 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .row.head {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      min-height: 32px;
+    }
+
+    .row:not(.head):hover { background: var(--row); }
+
+    .sha {
+      font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+
+    .when, .who { color: var(--muted); }
+
+    #empty {
+      margin: 12px 12px 0;
+      color: var(--muted);
+    }
+
+    .status { font-weight: 500; }
+
+    .status.shipped { color: var(--shipped); }
+
+    .status.failed { color: var(--failed); }
+
+    .status.building { color: var(--building); }
+
+    @media (max-width: 720px) {
+      .page { padding: 16px; }
+      .row.head { display: none; }
+      .row {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+          "status when"
+          "message message"
+          "sha who";
+        gap: 4px 12px;
+        padding: 12px 0;
+      }
+      .status { grid-area: status; }
+      .when { grid-area: when; justify-self: end; }
+      .message { grid-area: message; }
+      .sha { grid-area: sha; }
+      .who { grid-area: who; justify-self: end; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip" href="#revisions">Skip to revisions</a>
+  <div class="page">
+    <header class="top">
+      <a class="product" href="#revisions">Harbor</a>
+    </header>
+
+    <h1 id="revisions">Revisions</h1>
+    <p class="where">Production, last 24 hours.</p>
+
+    <form role="search">
+      <label for="filter">Filter</label>
+      <input id="filter" type="search" name="q" placeholder="Message, author, or sha">
+    </form>
+
+    <div class="list" role="table" aria-label="Revisions">
+      <div class="row head" role="row">
+        <span role="columnheader">Status</span>
+        <span role="columnheader">Revision</span>
+        <span role="columnheader">Message</span>
+        <span role="columnheader">Author</span>
+        <span role="columnheader">When</span>
+      </div>
+      <div class="row" role="row">
+        <span class="status shipped" role="cell">Shipped</span>
+        <span class="sha" role="cell">a1c4e90</span>
+        <span class="message" role="cell">Fix the retry delay on the preview proxy</span>
+        <span class="who" role="cell">M. Okonkwo</span>
+        <span class="when" role="cell">2m</span>
+      </div>
+      <div class="row" role="row">
+        <span class="status building" role="cell">Building</span>
+        <span class="sha" role="cell">88b21c4</span>
+        <span class="message" role="cell">Narrow the health-check window to 15s</span>
+        <span class="who" role="cell">A. Shah</span>
+        <span class="when" role="cell">6m</span>
+      </div>
+      <div class="row" role="row">
+        <span class="status failed" role="cell">Failed</span>
+        <span class="sha" role="cell">c09dd17</span>
+        <span class="message" role="cell">Rotate the preview signing key</span>
+        <span class="who" role="cell">L. Berger</span>
+        <span class="when" role="cell">18m</span>
+      </div>
+      <div class="row" role="row">
+        <span class="status shipped" role="cell">Shipped</span>
+        <span class="sha" role="cell">14aa0e2</span>
+        <span class="message" role="cell">Record the region on upload receipts</span>
+        <span class="who" role="cell">M. Okonkwo</span>
+        <span class="when" role="cell">1h</span>
+      </div>
+      <div class="row" role="row">
+        <span class="status shipped" role="cell">Shipped</span>
+        <span class="sha" role="cell">9f03b71</span>
+        <span class="message" role="cell">Drop the unused staging bucket policy</span>
+        <span class="who" role="cell">R. Ibarra</span>
+        <span class="when" role="cell">3h</span>
+      </div>
+      <div class="row" role="row">
+        <span class="status building" role="cell">Building</span>
+        <span class="sha" role="cell">22e18aa</span>
+        <span class="message" role="cell">Page the on-call when a rollback stalls</span>
+        <span class="who" role="cell">A. Shah</span>
+        <span class="when" role="cell">5h</span>
+      </div>
+    </div>
+    <p id="empty" hidden>No revisions match that filter.</p>
+  </div>
+  <script>
+    const filter = document.getElementById("filter");
+    const rows = Array.from(document.querySelectorAll(".row:not(.head)"));
+    const empty = document.getElementById("empty");
+    filter.addEventListener("input", () => {
+      const query = filter.value.trim().toLowerCase();
+      let shown = 0;
+      rows.forEach((row) => {
+        const match = query.length === 0 || row.textContent.toLowerCase().includes(query);
+        row.hidden = !match;
+        if (match) shown += 1;
+      });
+      empty.hidden = shown !== 0;
+    });
+  </script>
+</body>
+</html>
