@@ -2,7 +2,17 @@
 
 Paste these in front of a task. Point the agent at this repo first. The prompts tell it which file to load. They do not restate the principles.
 
-## Generate a screen
+## Quick prompt (simplest start)
+
+```
+Use Premium Taste (`AGENTS.md` in this repo or https://github.com/02-OS/premium-taste).
+Follow its load order: pick one direction and one matching reference, build the screen without generic SaaS skeletons or default palettes, then critique and revise with `skills/critique-ui.md`.
+
+Screen job: [one sentence with a verb, e.g. "let a developer inspect failed builds"]
+Real content: [names, prices, numbers, states]
+```
+
+## Generate a screen (explicit)
 
 ```
 Read AGENTS.md in the Premium Taste repo and follow its load order.
@@ -60,4 +70,13 @@ Fill "What not to copy".
 Add the row to taste/references/index.yaml.
 Run python3 scripts/check_catalog.py.
 Do not add tokens for it in this change.
+```
+
+---
+
+## Audit existing code prompt
+
+```text
+Run `python3 scripts/audit.py <path-to-ui-files>` (and `python3 scripts/critique_url.py <local-url>` if running a dev server).
+Fix every structural, layout, contrast, focus, and copy violation flagged before polishing colors, then re-run until exit code 0.
 ```

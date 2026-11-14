@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>kestrel 2.4 — Deterministic Config Linter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --surface: #f5f5f2;
+      --raised: #ffffff;
+      --ink: #1b1d1c;
+      --muted: #4e5450;
+      --hairline: #e2e3dc;
+      --border: #848985;
+      --accent: #1e5c40;
+    }
+    * { box-sizing: border-box; }
+    button, input, select { font: inherit; }
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: 'IBM Plex Sans', system-ui, sans-serif;
+      line-height: 1.55;
+    }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--hairline);
+    }
+    .wordmark {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    nav { display: flex; gap: 1.25rem; }
+    nav a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 0 0.25rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+    }
+    nav a:hover { color: var(--ink); }
+    main {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 4.5rem;
+    }
+    .tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin: 0 0 0.75rem;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.85rem, 3.6vw, 2.5rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      max-width: 24ch;
+    }
+    .lead {
+      margin: 1rem 0 0;
+      color: var(--muted);
+      max-width: 56ch;
+    }
+    .install-block {
+      margin-top: 2rem;
+      background: var(--raised);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1rem 1.125rem;
+    }
+    .install-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.625rem;
+    }
+    .install-head span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border: 1px solid var(--accent);
+      border-radius: 3px;
+      padding: 0.4375rem 0.875rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    pre {
+      margin: 0;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    .specs {
+      margin-top: 2.5rem;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem 2.5rem;
+      border-top: 1px solid var(--hairline);
+      padding-top: 1.75rem;
+    }
+    .spec-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--hairline);
+      font-size: 0.875rem;
+    }
+    .spec-k { color: var(--muted); }
+    .spec-v {
+      font-family: 'IBM Plex Mono', monospace;
+      font-variant-numeric: tabular-nums;
+    }
+    @media (max-width: 680px) {
+      .specs { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="wordmark" href="#main">kestrel 2.4.1</a>
+    <nav aria-label="Documentation">
+      <a href="#install">Install</a>
+      <a href="#specs">Exit Codes</a>
+    </nav>
+  </header>
+  <main id="main">
+    <p class="tag">MIT · Static Linux/macOS binary · Zero network telemetry</p>
+    <h1>Deterministic YAML and JSON Schema checks in four milliseconds</h1>
+    <p class="lead">Validates deployment manifests against pinned JSON Schema draft 2020-12 files before CI spins up containers.</p>
+    <section class="install-block" id="install" aria-label="Install and verify">
+      <div class="install-head">
+        <span>POSIX shell</span>
+        <button class="btn-primary" type="button">Copy install command</button>
+      </div>
+      <pre tabindex="0">$ curl -fsSL https://get.kestrel.dev/install.sh | sh
+$ kestrel check deploy/*.yaml --schema schemas/service.json
+deploy/api.yaml:14:9 error [port] expected integer 1024..65535, got "8080"</pre>
+    </section>
+    <section class="specs" id="specs" aria-label="Runtime specifications">
+      <div>
+        <div class="spec-row"><span class="spec-k">Binary size (x86_64 musl)</span><span class="spec-v">1.8 MB</span></div>
+        <div class="spec-row"><span class="spec-k">Cold parse time (10k lines)</span><span class="spec-v">4.2 ms</span></div>
+        <div class="spec-row"><span class="spec-k">Runtime dependencies</span><span class="spec-v">0 (static)</span></div>
+      </div>
+      <div>
+        <div class="spec-row"><span class="spec-k">Exit 0</span><span class="spec-v">All schemas valid</span></div>
+        <div class="spec-row"><span class="spec-k">Exit 1</span><span class="spec-v">Validation violation</span></div>
+        <div class="spec-row"><span class="spec-k">Exit 2</span><span class="spec-v">Unreadable path / flag error</span></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

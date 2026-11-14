@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Premium Taste — UI Judgment System, Static Auditor &amp; MCP Server</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#workbench">Skip to workbench</a>
+
+  <header class="topbar">
+    <div class="container topbar-inner">
+      <div class="brand-group">
+        <a class="wordmark" href="#workbench">premium-taste</a>
+        <span class="brand-meta" id="header-counts">62 rules · 25 anti-patterns · 18 refs</span>
+      </div>
+      <nav class="topnav" aria-label="Primary navigation">
+        <a href="#workbench">Workbench</a>
+        <a href="#auditor">Auditor</a>
+        <a href="#setup">Install &amp; MCP</a>
+        <a href="#tokens">Tokens</a>
+        <a href="#directions">Directions</a>
+        <a href="#references">Gallery</a>
+        <a href="https://github.com/02-OS/premium-taste" target="_blank" rel="noreferrer">GitHub ↗</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- 01. HERO + INTERACTIVE SPLIT WORKBENCH -->
+    <section class="hero-band" id="workbench" aria-labelledby="hero-h1">
+      <div class="container">
+        <div class="hero-split">
+          <div class="hero-left">
+            <p class="eyebrow">Design Judgment + Deterministic Tooling</p>
+            <h1 id="hero-h1">Teach your coding agent why UI looks finished.</h1>
+          </div>
+          <div class="hero-right">
+            <p class="hero-lead">
+              Locks <strong>1 screen job</strong>, <strong>1 aesthetic direction</strong>, and <strong>1 real reference structure</strong> before code is generated—then verifies hierarchy, typography, and WCAG contrast via CLI or MCP.
+            </p>
+            <div class="hero-actions">
+              <a class="btn-primary" href="#setup">Install in 1 command</a>
+              <a class="text-link" href="#auditor">Paste &amp; audit code →</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="showcase-wrap" aria-label="Before and after workbench">
+          <div class="showcase-bar">
+            <div class="underline-tabs" role="tablist" aria-label="Product scenario" id="scenario-tabs">
+              <button type="button" role="tab" id="tab-ai" aria-selected="true" aria-controls="workbench-stage" data-scenario="ai">AI Workspace</button>
+              <button type="button" role="tab" id="tab-rowan" aria-selected="false" aria-controls="workbench-stage" data-scenario="rowan">Object Store</button>
+              <button type="button" role="tab" id="tab-pricing" aria-selected="false" aria-controls="workbench-stage" data-scenario="pricing">SaaS Pricing</button>
+              <button type="button" role="tab" id="tab-metrics" aria-selected="false" aria-controls="workbench-stage" data-scenario="metrics">Ops Telemetry</button>
+              <button type="button" role="tab" id="tab-cli" aria-selected="false" aria-controls="workbench-stage" data-scenario="cli">CLI Tool</button>
+              <button type="button" role="tab" id="tab-harbor" aria-selected="false" aria-controls="workbench-stage" data-scenario="harbor">Editorial</button>
+            </div>
+
+            <div class="seg-track" role="group" aria-label="Comparison view">
+              <button type="button" class="seg-btn" id="view-split" aria-pressed="true" data-view="split">Compare Split</button>
+              <button type="button" class="seg-btn" id="view-after" aria-pressed="false" data-view="after">With Taste</button>
+              <button type="button" class="seg-btn" id="view-before" aria-pressed="false" data-view="before">Without</button>
+            </div>
+          </div>
+
+          <div class="stage-sheet" id="workbench-stage" role="tabpanel" aria-labelledby="tab-ai">
+            <div class="stage-split" id="stage-split"></div>
+            <div class="diff-strip" id="diff-strip"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02. LIVE STATIC AUDITOR -->
+    <section class="surface-band" id="auditor" aria-labelledby="auditor-h2">
+      <div class="container">
+        <div class="band-head">
+          <div>
+            <p class="eyebrow">02 · Live Static Auditor (Exact Parity With scripts/audit.py)</p>
+            <h2 id="auditor-h2">Catch AI UI tells before a single line ships.</h2>
+          </div>
+          <div class="chip-row" role="group" aria-label="Example presets">
+            <button type="button" class="chip-btn" aria-pressed="true" data-preset="saas">Broken SaaS Hero</button>
+            <button type="button" class="chip-btn" aria-pressed="false" data-preset="ai">AI Sparkle Dashboard</button>
+            <button type="button" class="chip-btn" aria-pressed="false" data-preset="pricing-ok">Clean Pricing</button>
+            <button type="button" class="chip-btn" aria-pressed="false" data-preset="rowan-ok">Clean Rowan Bowl</button>
+          </div>
+        </div>
+
+        <div class="auditor-split">
+          <div class="editor-pane">
+            <div class="editor-bar">
+              <label for="audit-file-name">Filename context</label>
+              <input id="audit-file-name" type="text" value="hero.html" spellcheck="false" />
+            </div>
+            <div class="editor-area-wrap">
+              <label class="sr-only" for="audit-code-input">HTML, CSS, or JSX code snippet to audit</label>
+              <textarea id="audit-code-input" rows="15" spellcheck="false"></textarea>
+            </div>
+          </div>
+
+          <div class="report-pane" aria-live="polite">
+            <div class="report-head">
+              <div>
+                <p class="eyebrow" style="margin-bottom:0.25rem;">Critique Output</p>
+                <p class="audit-verdict" id="audit-verdict">Checking...</p>
+              </div>
+              <button type="button" class="chip-btn" id="copy-audit-report">Copy report</button>
+            </div>
+
+            <div class="score-bars" id="audit-scores"></div>
+
+            <div class="findings-stack" id="audit-findings"></div>
+
+            <p class="pane-foot">
+              CLI check across directories: <code>python3 scripts/audit.py src/</code> · Computed browser contrast &amp; mobile layout check: <code>python3 scripts/critique_url.py http://localhost:4173/</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03. SETUP, CLI & MCP -->
+    <section class="paper-band" id="setup" aria-labelledby="setup-h2">
+      <div class="container">
+        <div class="setup-layout">
+          <div class="setup-intro">
+            <p class="eyebrow">03 · Zero-Dependency Setup</p>
+            <h2 id="setup-h2">Wire it into your project or MCP client in 30 seconds.</h2>
+            <p class="band-copy">
+              Runs cleanly on stock Python 3 with zero npm or pip packages. Bundle the taste catalog + CLI scripts locally or connect the stdio MCP server directly.
+            </p>
+            <ol class="step-list">
+              <li><strong>Name the job</strong> in one sentence starting with a verb.</li>
+              <li><strong>Pick 1 direction &amp; 1 reference</strong> from <code>taste/</code> or via <code>pick_direction</code> MCP.</li>
+              <li><strong>Verify deterministically</strong> with <code>audit.py</code> (static) and <code>critique_url.py</code> (headless Chromium).</li>
+            </ol>
+          </div>
+
+          <div class="setup-terminal-col">
+            <div class="underline-tabs" role="tablist" aria-label="Setup option" id="setup-tabs">
+              <button type="button" role="tab" id="stab-curl" aria-selected="true" aria-controls="spanel-curl">1-Line Install</button>
+              <button type="button" role="tab" id="stab-mcp" aria-selected="false" aria-controls="spanel-mcp">MCP (.mcp.json)</button>
+              <button type="button" role="tab" id="stab-cli" aria-selected="false" aria-controls="spanel-cli">CLI &amp; URL Critique</button>
+              <button type="button" role="tab" id="stab-prompt" aria-selected="false" aria-controls="spanel-prompt">Prompt Builder</button>
+            </div>
+
+            <div class="terminal-panel" role="tabpanel" id="spanel-curl" aria-labelledby="stab-curl">
+              <div class="terminal-card">
+                <div class="terminal-bar">
+                  <span>bash · copies .premium-taste/, scripts/, and .mcp.json</span>
+                  <button type="button" class="term-copy copy-btn" data-copy-target="cmd-curl">Copy</button>
+                </div>
+                <pre id="cmd-curl" tabindex="0">curl -fsSL https://raw.githubusercontent.com/02-OS/premium-taste/master/install.sh | bash -s -- . --agent all --mcp</pre>
+              </div>
+              <p class="sub-caption">Or dry-run locally without modifying files: <code>python3 scripts/install.py /path/to/app --agent all --mcp --dry-run</code></p>
+            </div>
+
+            <div class="terminal-panel" role="tabpanel" id="spanel-mcp" aria-labelledby="stab-mcp" hidden>
+              <div class="terminal-card">
+                <div class="terminal-bar">
+                  <span>.mcp.json (Claude Code · Cursor · Codex CLI)</span>
+                  <button type="button" class="term-copy copy-btn" data-copy-target="cmd-mcp">Copy</button>
+                </div>
+                <pre id="cmd-mcp" tabindex="0">{
+  "mcpServers": {
+    "premium-taste": {
+      "command": "python3",
+      "args": [".premium-taste/scripts/mcp_server.py"]
+    }
+  }
+}</pre>
+              </div>
+              <p class="sub-caption">Tools exposed: <code>pick_direction</code>, <code>get_reference</code>, <code>get_tokens</code>, <code>audit_ui</code>.</p>
+            </div>
+
+            <div class="terminal-panel" role="tabpanel" id="spanel-cli" aria-labelledby="stab-cli" hidden>
+              <div class="terminal-card">
+                <div class="terminal-bar">
+                  <span>CI &amp; localhost checks</span>
+                  <button type="button" class="term-copy copy-btn" data-copy-target="cmd-cli">Copy</button>
+                </div>
+                <pre id="cmd-cli" tabindex="0">python3 scripts/audit.py src/
+python3 scripts/critique_url.py http://localhost:4173/
+python3 scripts/check_catalog.py</pre>
+              </div>
+            </div>
+
+            <div class="terminal-panel" role="tabpanel" id="spanel-prompt" aria-labelledby="stab-prompt" hidden>
+              <div class="pb-fields">
+                <div class="pb-field">
+                  <label for="pb-job">Screen job</label>
+                  <input id="pb-job" type="text" value="Inspect recent failed deploys and p99 endpoint latency logs." />
+                </div>
+                <div class="pb-field">
+                  <label for="pb-direction">Direction</label>
+                  <select id="pb-direction">
+                    <option value="auto">Auto-pick from job</option>
+                    <option value="precise-technical" selected>precise-technical</option>
+                    <option value="quiet-luxury">quiet-luxury</option>
+                    <option value="cinematic-dark">cinematic-dark</option>
+                    <option value="editorial-print">editorial-print</option>
+                  </select>
+                </div>
+              </div>
+              <div class="terminal-card">
+                <div class="terminal-bar">
+                  <span>Zero-install prompt</span>
+                  <button type="button" class="term-copy copy-btn" data-copy-target="cmd-prompt">Copy</button>
+                </div>
+                <pre id="cmd-prompt" tabindex="0"></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04. TOKEN & CONTRAST STUDIO -->
+    <section class="surface-band" id="tokens" aria-labelledby="tokens-h2">
+      <div class="container">
+        <div class="band-head">
+          <div>
+            <p class="eyebrow">04 · Live Token &amp; WCAG Contrast Studio</p>
+            <h2 id="tokens-h2">Tune starter palettes, verify ratios, and export CSS or Tailwind.</h2>
+          </div>
+          <div class="chip-row" role="group" aria-label="Load starter direction tokens">
+            <button type="button" class="chip-btn" aria-pressed="true" data-token-pack="precise-technical">Instrument</button>
+            <button type="button" class="chip-btn" aria-pressed="false" data-token-pack="quiet-luxury">Warm Paper</button>
+            <button type="button" class="chip-btn" aria-pressed="false" data-token-pack="editorial-print">Column</button>
+            <button type="button" class="chip-btn" aria-pressed="false" data-token-pack="cinematic-dark">Night Room</button>
+          </div>
+        </div>
+
+        <div class="studio-layout">
+          <div class="studio-left">
+            <div class="swatch-grid" id="token-controls"></div>
+            <table class="clean-table contrast-table">
+              <thead>
+                <tr>
+                  <th scope="col">Token pair</th>
+                  <th scope="col">Contrast</th>
+                  <th scope="col">WCAG</th>
+                </tr>
+              </thead>
+              <tbody id="contrast-tbody"></tbody>
+            </table>
+          </div>
+
+          <div class="studio-right">
+            <div class="live-token-stage" id="live-token-stage">
+              <div class="lts-surface" id="token-preview-outer">
+                <span class="lts-meta" id="tp-eyebrow">LIVE SURFACE CHECK · INSTRUMENT</span>
+                <div class="lts-card" id="token-preview">
+                  <h3 class="lts-title" id="tp-title">Service release readiness</h3>
+                  <p class="lts-body" id="tp-body">Outer canvas renders your surface token; this panel renders surface-raised and muted ink.</p>
+                  <button type="button" class="lts-cta" id="tp-cta">Acknowledge release</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="terminal-card">
+              <div class="terminal-bar">
+                <div class="term-tabs" role="tablist" aria-label="Token export format" id="export-tabs">
+                  <button type="button" role="tab" aria-selected="true" data-export="css">CSS Variables</button>
+                  <button type="button" role="tab" aria-selected="false" data-export="tailwind">Tailwind v4</button>
+                  <button type="button" role="tab" aria-selected="false" data-export="design">DESIGN.md</button>
+                </div>
+                <button type="button" class="term-copy copy-btn" data-copy-target="token-export-code">Copy</button>
+              </div>
+              <pre id="token-export-code" tabindex="0"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05. FOUR DIRECTIONS (STYLED IN THEIR ACTUAL PALETTES) -->
+    <section class="paper-band" id="directions" aria-labelledby="directions-h2">
+      <div class="container">
+        <div class="band-head">
+          <div>
+            <p class="eyebrow">05 · Four Aesthetic Directions</p>
+            <h2 id="directions-h2">Pick one direction per screen. Never blend them.</h2>
+          </div>
+        </div>
+        <div class="dir-showcase" id="directions-grid"></div>
+      </div>
+    </section>
+
+    <!-- 06. REFERENCE GALLERY -->
+    <section class="surface-band" id="references" aria-labelledby="references-h2">
+      <div class="container">
+        <div class="band-head">
+          <div>
+            <p class="eyebrow">06 · Reference Gallery (18 Studied Products)</p>
+            <h2 id="references-h2">Steal the structure, never the costume.</h2>
+          </div>
+          <div class="gallery-controls">
+            <div class="chip-row" role="group" aria-label="Filter references by direction" id="ref-filters">
+              <button type="button" class="chip-btn" aria-pressed="true" data-dir="all">All (18)</button>
+              <button type="button" class="chip-btn" aria-pressed="false" data-dir="quiet-luxury">Quiet Luxury</button>
+              <button type="button" class="chip-btn" aria-pressed="false" data-dir="cinematic-dark">Cinematic Dark</button>
+              <button type="button" class="chip-btn" aria-pressed="false" data-dir="precise-technical">Precise Technical</button>
+              <button type="button" class="chip-btn" aria-pressed="false" data-dir="editorial-print">Editorial Print</button>
+            </div>
+            <div class="search-field">
+              <label class="sr-only" for="ref-search">Search references</label>
+              <input id="ref-search" type="search" placeholder="Search docs, film, index..." />
+            </div>
+          </div>
+        </div>
+        <div class="index-list" id="ref-list"></div>
+      </div>
+    </section>
+
+    <!-- 07. ANTI-PATTERNS -->
+    <section class="paper-band" id="anti-patterns" aria-labelledby="anti-patterns-h2">
+      <div class="container">
+        <div class="band-head">
+          <div>
+            <p class="eyebrow">07 · Automatic Refusal Rules (25 Anti-Patterns)</p>
+            <h2 id="anti-patterns-h2">Named patterns caught by audit.py before code lands.</h2>
+          </div>
+          <div class="chip-row" role="group" aria-label="Filter anti-patterns by category" id="ap-filters"></div>
+        </div>
+
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Anti-patterns catalog">
+          <table class="clean-table">
+            <thead>
+              <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Failure mode</th>
+                <th scope="col">Telltale sign</th>
+                <th scope="col">Do instead</th>
+              </tr>
+            </thead>
+            <tbody id="ap-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08. REPOSITORY MAP -->
+    <section class="surface-band" id="files" aria-labelledby="files-h2">
+      <div class="container">
+        <div class="band-head">
+          <div>
+            <p class="eyebrow">08 · Repository &amp; Script Index</p>
+            <h2 id="files-h2">Every file included when you clone or install.</h2>
+          </div>
+        </div>
+
+        <div class="index-list">
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/AGENTS.md" target="_blank" rel="noreferrer"><code>AGENTS.md</code><span>Mandatory load order and refusal rules</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/install.sh" target="_blank" rel="noreferrer"><code>install.sh</code><span>Zero-clone curl installer supporting --agent and --mcp</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/audit.py" target="_blank" rel="noreferrer"><code>scripts/audit.py</code><span>Deterministic static linter (HTML, CSS, JSX, TSX, Vue, Svelte)</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/critique_url.py" target="_blank" rel="noreferrer"><code>scripts/critique_url.py</code><span>Headless Chromium CDP live DOM contrast &amp; layout checker</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/mcp_server.py" target="_blank" rel="noreferrer"><code>scripts/mcp_server.py</code><span>Stdlib JSON-RPC 2.0 MCP server over stdio</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/install.py" target="_blank" rel="noreferrer"><code>scripts/install.py</code><span>Copies .premium-taste/, writes agent skills, merges .mcp.json</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/taste/principles.yaml" target="_blank" rel="noreferrer"><code>taste/principles.yaml</code><span>62 normative rules scored across 6 critique dimensions</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/examples/before-after.md" target="_blank" rel="noreferrer"><code>examples/before-after.md</code><span>Side-by-side HTML rewrites (AI workspace, pricing, metrics, CLI, store)</span></a>
+        </div>
+
+        <footer class="site-foot">
+          <span>MIT License · <a href="https://github.com/02-OS/premium-taste" target="_blank" rel="noreferrer">02-OS/premium-taste</a></span>
+          <span>Zero build tooling · Built with Instrument + IBM Plex Sans &amp; Mono</span>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <script src="./data.js"></script>
+  <script src="./auditor.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>

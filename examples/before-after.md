@@ -81,3 +81,16 @@ A dashboard costume for the same tool would be a sidebar, four cards (deploys to
 - Mono is the sha (`type.roles`). The title is IBM Plex Sans at 20px.
 - The filter has a visible label. Typing `failed` or `proxy` hides the other rows and can show "No revisions match that filter."
 - Green, rust, and amber are status words, not a primary button. This screen does not need a filled button, and it does not pretend to switch environments. The line under the title says which environment the list is.
+
+---
+
+## Additional Before -> After HTML pairs
+
+All HTML pairs below can be checked automatically with `python3 scripts/audit.py examples/*-before.html` (expected failures) and `python3 scripts/audit.py examples/*-after.html` (expected pass):
+
+| Specimen | Direction & reference | What `*-before.html` did wrong | What `*-after.html` fixes |
+| :--- | :--- | :--- | :--- |
+| DraftBench AI workspace (`ai-workspace-before.html` -> `ai-workspace-after.html`) | `precise-technical` (`ia-writer` + `figma`) | Dark indigo glow, sparkles, 4 KPI stat boxes above the prompt, gradient text, missing `<label>`, 2 primary buttons | File context rail + monospace revision prompt, tabular token count, 1 primary action, clean `:focus-visible` ring |
+| MetricPort pricing (`pricing-before.html` -> `pricing-after.html`) | `precise-technical` (`stripe-docs`) | Gradient hero headline, 3 shadowed cards, purple `"MOST POPULAR"` badge, 3 identical filled buttons, fake `"5,000+ startups"` | Left-aligned unit pricing formula (`$0.18 / GB`), aligned comparison table with tabular numbers, 1 primary CTA |
+| Northbeam latency & incidents (`metrics-before.html` -> `metrics-after.html`) | `precise-technical` (`stripe-docs` + `things-3`) | `layout.dashboard-costume` 4 KPI cards + abstract copy (`Seamless Observability`, `Boost Performance`) | Live incident queue and endpoint `p99` ledger on the first screen with semantic state text and 1 acknowledge CTA |
+| Kestrel CLI landing (`cli-landing-before.html` -> `cli-landing-after.html`) | `precise-technical` (`stripe-docs` + `teenage-engineering`) | `skeleton.saas-landing` hero + sparkle/rocket/shield cards + 2 competing CTAs | Install + verify commands on the first screen, binary size/cold-start specs, exit code table |

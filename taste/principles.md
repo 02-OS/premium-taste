@@ -709,4 +709,4 @@ Each id is specified in [`anti-patterns.yaml`](anti-patterns.yaml). The catalog 
 6. Run the critique skill. Apply structural fixes first.
 7. Stop when each critique dimension is at least 4, or after two revision passes. Then report what still fails.
 
-Tokens, if you need them, come last. Example identities for two directions are in [`tokens/`](../tokens/).
+Tokens, if you need them, come last. Example identities for all four directions are in [`tokens/`](../tokens/).

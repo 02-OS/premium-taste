@@ -205,7 +205,7 @@ A passing uniqueness score names the idea and the divergence:
 
 ## Installing the skill elsewhere
 
-This file is already the skill. To point another agent at it:
+Run `python3 scripts/install.py /path/to/your-project` to copy the core files into `.premium-taste/` and write lightweight pointer files for your coding agent, or wire them manually:
 
 - Claude Code: copy this file to `.claude/skills/critique-ui/SKILL.md`, or rely on `CLAUDE.md` in this repo.
 - Cursor: add a rule that says to follow `skills/critique-ui.md` before finishing UI work.

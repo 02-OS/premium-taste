@@ -6,6 +6,39 @@ The core is judgment. Principles, a small gallery of annotated products, and a c
 
 Agents that follow it should make interfaces that are specific to the product in front of them. A bowl, a film, a revision list, and an essay do not share a layout. They can share a standard: one idea, a real hierarchy, restrained color, type with a job, and text someone can read.
 
+## Use it in 30 seconds
+
+**Option 1 — Paste one prompt (no setup):**
+
+```text
+Read AGENTS.md at https://github.com/02-OS/premium-taste and follow its load order.
+Pick one direction and one reference for this screen, refuse generic SaaS skeletons,
+then run skills/critique-ui.md and fix structure before color.
+
+Job of this screen: [one sentence with a verb]
+```
+
+**Option 2 — Install into your project (1 command, no manual clone):**
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/02-OS/premium-taste/master/install.sh | bash -s -- . --agent all --mcp
+```
+
+Or run the Python installer from a local checkout:
+
+```sh
+python3 /tmp/premium-taste/scripts/install.py /path/to/your-app --agent all --mcp
+```
+
+**Option 3 — Run deterministic audits locally:**
+
+```sh
+python3 scripts/audit.py src/                         # static rules on HTML/CSS/JSX/TSX
+python3 scripts/critique_url.py http://localhost:4173/ # live Chromium contrast & layout check
+```
+
+That copies the judgment files into `.premium-taste/` inside your project and writes a lightweight pointer for Claude Code (`.claude/skills/critique-ui/SKILL.md`), Cursor (`.cursor/rules/premium-taste.mdc`), or Codex/agents (`.agents/skills/premium-taste/SKILL.md` and `AGENTS.md`). Pass `--agent all` or `--dry-run` to customize.
+
 ## How an agent should use it
 
 Start at [AGENTS.md](AGENTS.md). The short version:
@@ -44,10 +77,21 @@ taste/references/         annotated gallery and an index
 skills/critique-ui.md     generate → critique → revise
 tokens/                   four example DESIGN.md identities
 examples/                 a negative specimen, two afters, prompts
-scripts/check_catalog.py  ids and files still match
+site/                      interactive workbench, live auditor, token contrast studio, and catalog explorer
+install.sh                 zero-clone installer supporting --agent and --mcp
+scripts/audit.py           deterministic static UI rule checker (HTML, CSS, JSX, TSX, Vue, Svelte)
+scripts/critique_url.py    live Chromium CDP / HTTP fallback URL critique (contrast, fonts, overflow)
+scripts/mcp_server.py      stdlib JSON-RPC 2.0 MCP server (pick_direction, get_reference, get_tokens, audit_ui)
+scripts/check_catalog.py   ids and files still match
+scripts/install.py         install into another project and register agent rules / .mcp.json
+scripts/build_site_data.py sync site/data.js from taste/ and tokens/
 ```
 
 Sample tokens for each direction live in `tokens/` and use the [DESIGN.md](https://github.com/google-labs-code/design.md) format. Load the one that matches the direction you chose, and only when the product has no guide of its own. They are examples of a direction, not the system.
+
+## Site
+
+[site/index.html](site/index.html) is the self-contained guide and interactive prompt builder for this repo. It follows `precise-technical`, the Stripe Docs structure, and the Instrument tokens. Serve `site/` directly with any static HTTP server (for example, `python3 -m http.server 4173 --directory site`). If you edit `taste/` or `tokens/`, regenerate its data with `python3 scripts/build_site_data.py`.
 
 ## Examples
 

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MetricPort Pricing — Before</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      padding: 64px 24px;
+    }
+    .header { text-align: center; max-width: 640px; margin: 0 auto 48px; }
+    h1 {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 44px;
+      background: linear-gradient(90deg, #4f46e5, #0ea5e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 1020px;
+      margin: 0 auto;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e2e8f0;
+    }
+    .card.featured {
+      border: 2px solid #4f46e5;
+      box-shadow: 0 24px 48px rgba(79, 70, 229, 0.18);
+    }
+    .pill {
+      display: inline-block;
+      background: #4f46e5;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+    .price { font-size: 38px; font-weight: 700; margin: 16px 0; }
+    button {
+      width: 100%;
+      margin-top: 24px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 0;
+      background: #4f46e5;
+      color: #fff;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Unlock seamless scale</h1>
+    <p>Next-gen pricing to elevate your team velocity. Trusted by 5,000+ startups.</p>
+  </div>
+  <div class="cards">
+    <div class="card">
+      <h2>Starter</h2>
+      <div class="price">$0</div>
+      <p>For hobby projects exploring telemetry.</p>
+      <button type="button">Get Started</button>
+    </div>
+    <div class="card featured">
+      <span class="pill">MOST POPULAR</span>
+      <h2>Pro AI</h2>
+      <div class="price">$49</div>
+      <p>Empower your engineers with magic scaling.</p>
+      <button type="button">Get Started</button>
+    </div>
+    <div class="card">
+      <h2>Enterprise</h2>
+      <div class="price">Custom</div>
+      <p>Seamless security and unlimited power.</p>
+      <button type="button">Get Started</button>
+    </div>
+  </div>
+</body>
+</html>
