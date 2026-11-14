@@ -16,7 +16,7 @@
     <div class="container topbar-inner">
       <div class="brand-group">
         <a class="wordmark" href="#workbench">premium-taste</a>
-        <span class="brand-meta" id="header-counts">62 rules · 25 anti-patterns · 18 refs</span>
+        <span class="brand-meta" id="header-counts">68 rules · 30 anti-patterns · 18 refs · 12 patterns</span>
       </div>
       <nav class="topnav" aria-label="Primary navigation">
         <a href="#workbench">Workbench</a>
@@ -193,7 +193,7 @@ python3 scripts/check_catalog.py</pre>
 
             <div class="terminal-panel" role="tabpanel" id="spanel-prompt" aria-labelledby="stab-prompt" hidden>
               <div class="pb-fields">
-                <div class="pb-field">
+                <div class="pb-field pb-field-wide">
                   <label for="pb-job">Screen job</label>
                   <input id="pb-job" type="text" value="Inspect recent failed deploys and p99 endpoint latency logs." />
                 </div>
@@ -207,7 +207,17 @@ python3 scripts/check_catalog.py</pre>
                     <option value="editorial-print">editorial-print</option>
                   </select>
                 </div>
+                <div class="pb-field">
+                  <label for="pb-pattern">Pattern (optional)</label>
+                  <select id="pb-pattern">
+                    <option value="">None (custom layout)</option>
+                  </select>
+                </div>
               </div>
+              <label class="pb-check" for="pb-ledger">
+                <input id="pb-ledger" type="checkbox" checked />
+                <span>Include 4-line Decision Ledger + Visual Target Gate (`1280px` &amp; `375px`)</span>
+              </label>
               <div class="terminal-card">
                 <div class="terminal-bar">
                   <span>Zero-install prompt</span>
@@ -261,6 +271,8 @@ python3 scripts/check_catalog.py</pre>
                   <p class="lts-body" id="tp-body">Outer canvas renders your surface token; this panel renders surface-raised and muted ink.</p>
                   <button type="button" class="lts-cta" id="tp-cta">Acknowledge release</button>
                 </div>
+                <div class="surface-steps-strip" id="surface-steps-strip" aria-label="Surface elevation steps 0 to 3"></div>
+                <div class="type-scale-strip" id="type-scale-strip" aria-label="Type scale and OpenType specimen"></div>
               </div>
             </div>
 
@@ -269,9 +281,17 @@ python3 scripts/check_catalog.py</pre>
                 <div class="term-tabs" role="tablist" aria-label="Token export format" id="export-tabs">
                   <button type="button" role="tab" aria-selected="true" data-export="css">CSS Variables</button>
                   <button type="button" role="tab" aria-selected="false" data-export="tailwind">Tailwind v4</button>
+                  <button type="button" role="tab" aria-selected="false" data-export="dtcg">W3C DTCG JSON</button>
                   <button type="button" role="tab" aria-selected="false" data-export="design">DESIGN.md</button>
                 </div>
-                <button type="button" class="term-copy copy-btn" data-copy-target="token-export-code">Copy</button>
+                <div class="term-actions">
+                  <div class="term-verbosity" id="design-verbosity" role="group" aria-label="DESIGN.md verbosity" hidden>
+                    <button type="button" class="term-copy" aria-pressed="false" data-verbosity="compact">Compact</button>
+                    <button type="button" class="term-copy" aria-pressed="true" data-verbosity="extended">Extended</button>
+                  </div>
+                  <button type="button" class="term-copy" id="token-download-btn">Download</button>
+                  <button type="button" class="term-copy copy-btn" data-copy-target="token-export-code">Copy</button>
+                </div>
               </div>
               <pre id="token-export-code" tabindex="0"></pre>
             </div>
@@ -293,25 +313,34 @@ python3 scripts/check_catalog.py</pre>
       </div>
     </section>
 
-    <!-- 06. REFERENCE GALLERY -->
+    <!-- 06. CATALOG GALLERY (BRAND REFERENCES + SCREEN & FLOW PATTERNS) -->
     <section class="surface-band" id="references" aria-labelledby="references-h2">
       <div class="container">
         <div class="band-head">
           <div>
-            <p class="eyebrow">06 · Reference Gallery (18 Studied Products)</p>
-            <h2 id="references-h2">Steal the structure, never the costume.</h2>
+            <p class="eyebrow" id="gallery-eyebrow">06 · Catalog Gallery (18 Brands · 12 Patterns)</p>
+            <h2 id="references-h2">Steal the structure—or pick a screen &amp; flow contract.</h2>
           </div>
           <div class="gallery-controls">
-            <div class="chip-row" role="group" aria-label="Filter references by direction" id="ref-filters">
-              <button type="button" class="chip-btn" aria-pressed="true" data-dir="all">All (18)</button>
+            <div class="chip-row" role="group" aria-label="Switch catalog mode" id="gallery-mode-tabs">
+              <button type="button" class="chip-btn" aria-pressed="true" data-gallery-mode="references">Brand References (18)</button>
+              <button type="button" class="chip-btn" aria-pressed="false" data-gallery-mode="patterns">Screen &amp; Flow Patterns (12)</button>
+            </div>
+            <div class="chip-row" role="group" aria-label="Filter items by direction" id="ref-filters">
+              <button type="button" class="chip-btn" aria-pressed="true" data-dir="all">All</button>
               <button type="button" class="chip-btn" aria-pressed="false" data-dir="quiet-luxury">Quiet Luxury</button>
               <button type="button" class="chip-btn" aria-pressed="false" data-dir="cinematic-dark">Cinematic Dark</button>
               <button type="button" class="chip-btn" aria-pressed="false" data-dir="precise-technical">Precise Technical</button>
               <button type="button" class="chip-btn" aria-pressed="false" data-dir="editorial-print">Editorial Print</button>
             </div>
+            <div class="chip-row" role="group" aria-label="Filter patterns by kind" id="pat-type-filters" hidden>
+              <button type="button" class="chip-btn" aria-pressed="true" data-pat-type="all">All kinds (12)</button>
+              <button type="button" class="chip-btn" aria-pressed="false" data-pat-type="screen">Screens (9)</button>
+              <button type="button" class="chip-btn" aria-pressed="false" data-pat-type="flow">Flows (3)</button>
+            </div>
             <div class="search-field">
-              <label class="sr-only" for="ref-search">Search references</label>
-              <input id="ref-search" type="search" placeholder="Search docs, film, index..." />
+              <label class="sr-only" for="ref-search">Search catalog</label>
+              <input id="ref-search" type="search" placeholder="Search docs, pricing, onboarding..." />
             </div>
           </div>
         </div>
@@ -324,7 +353,7 @@ python3 scripts/check_catalog.py</pre>
       <div class="container">
         <div class="band-head">
           <div>
-            <p class="eyebrow">07 · Automatic Refusal Rules (25 Anti-Patterns)</p>
+            <p class="eyebrow" id="ap-eyebrow">07 · Automatic Refusal Rules (30 Anti-Patterns)</p>
             <h2 id="anti-patterns-h2">Named patterns caught by audit.py before code lands.</h2>
           </div>
           <div class="chip-row" role="group" aria-label="Filter anti-patterns by category" id="ap-filters"></div>
@@ -361,9 +390,11 @@ python3 scripts/check_catalog.py</pre>
           <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/install.sh" target="_blank" rel="noreferrer"><code>install.sh</code><span>Zero-clone curl installer supporting --agent and --mcp</span></a>
           <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/audit.py" target="_blank" rel="noreferrer"><code>scripts/audit.py</code><span>Deterministic static linter (HTML, CSS, JSX, TSX, Vue, Svelte)</span></a>
           <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/critique_url.py" target="_blank" rel="noreferrer"><code>scripts/critique_url.py</code><span>Headless Chromium CDP live DOM contrast &amp; layout checker</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/mcp_server.py" target="_blank" rel="noreferrer"><code>scripts/mcp_server.py</code><span>Stdlib JSON-RPC 2.0 MCP server over stdio</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/mcp_server.py" target="_blank" rel="noreferrer"><code>scripts/mcp_server.py</code><span>Stdlib JSON-RPC 2.0 MCP server (6 tools over stdio)</span></a>
           <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/install.py" target="_blank" rel="noreferrer"><code>scripts/install.py</code><span>Copies .premium-taste/, writes agent skills, merges .mcp.json</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/taste/principles.yaml" target="_blank" rel="noreferrer"><code>taste/principles.yaml</code><span>62 normative rules scored across 6 critique dimensions</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/taste/principles.yaml" target="_blank" rel="noreferrer"><code>taste/principles.yaml</code><span>68 normative rules scored across 6 critique dimensions</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/taste/patterns/index.yaml" target="_blank" rel="noreferrer"><code>taste/patterns/index.yaml</code><span>12 screen &amp; multi-step flow architecture contracts</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/skills/premium-taste/SKILL.md" target="_blank" rel="noreferrer"><code>skills/premium-taste/SKILL.md</code><span>Portable skill entrypoint (+ .claude-plugin, .cursor-plugin, .codex-plugin)</span></a>
           <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/examples/before-after.md" target="_blank" rel="noreferrer"><code>examples/before-after.md</code><span>Side-by-side HTML rewrites (AI workspace, pricing, metrics, CLI, store)</span></a>
         </div>
 

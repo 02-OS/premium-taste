@@ -313,13 +313,26 @@ def audit_text(text: str, file_label: str, allow_fonts: set[str] | None = None) 
             "Use a solid surface or raised paper tone instead of decorative blur.",
         )
 
-    # 6. motion.hover & material.gray-card-shadow & motion.reduced
+    # 6. motion.hover & material.gray-card-shadow & motion.reduced & motion.timing
     has_motion = False
     has_reduced_motion = "@media (prefers-reduced-motion" in text or "motion-reduce:" in text
     for seg, base_off in css_segments:
         clean_seg = strip_comments(seg)
         if "@keyframes" in clean_seg or "transition:" in clean_seg or "scroll-behavior:" in clean_seg:
             has_motion = True
+        for tm in re.finditer(r"transition\s*:\s*all\b", clean_seg, re.I):
+            ln = line_for_offset(text, base_off + tm.start())
+            add_finding(
+                findings,
+                lines,
+                file_label,
+                ln,
+                "motion.timing",
+                "restraint",
+                "warn",
+                "transition: all animates layout properties unnecessarily.",
+                "Specify exact transitions (color, border-color, opacity) keeping durations 120–180ms.",
+            )
         for m in re.finditer(r"([^{}]+:hover[^{]*)\{([^}]+)\}", clean_seg, re.S | re.I):
             body = m.group(2)
             if re.search(r"transform\s*:\s*(?:translate|scale)", body, re.I) and re.search(r"box-shadow", body, re.I):
@@ -352,6 +365,46 @@ def audit_text(text: str, file_label: str, allow_fonts: set[str] | None = None) 
                     f"In-flow card selector ({sel.strip()}) uses large border-radius with box-shadow.",
                     "Use flat paper, margins, and 1px hairlines; reserve shadow for overlays only.",
                 )
+            # Check type.no-hairline-body (font-weight 100/200 on reading/nav selectors or <=18px text)
+            fw_m = re.search(r"font-weight\s*:\s*(100|200)\b", body, re.I)
+            if fw_m:
+                fs_m = re.search(r"font-size\s*:\s*(\d+(?:\.\d+)?)px", body, re.I)
+                is_reading_sel = bool(re.search(r"(?:^|[\s,])(body|p|li|dd|article|main|nav|label|button|a)\b", sel, re.I))
+                if is_reading_sel or (fs_m and float(fs_m.group(1)) <= 18):
+                    ln = line_for_offset(text, base_off + m.start())
+                    add_finding(
+                        findings,
+                        lines,
+                        file_label,
+                        ln,
+                        "type.no-hairline-body",
+                        "accessibility",
+                        "error",
+                        f"Hairline font-weight {fw_m.group(1)} applied on '{sel.strip()}' (fails practical legibility below 18px).",
+                        "Use weight 400 (or 500 for short UI labels) for readable text and navigation.",
+                    )
+            # Check type.caps-tracking
+            if re.search(r"text-transform\s*:\s*uppercase", body, re.I):
+                ls_m = re.search(r"letter-spacing\s*:\s*([^;}]+)", body, re.I)
+                has_pos_ls = False
+                if ls_m:
+                    ls_raw = ls_m.group(1).strip()
+                    ls_num = re.match(r"([+-]?(?:\d+\.?\d*|\.\d+))\s*(?:px|em|rem)?\b", ls_raw, re.I)
+                    if (ls_num and float(ls_num.group(1)) > 0) or ls_raw.startswith("var("):
+                        has_pos_ls = True
+                if not has_pos_ls:
+                    ln = line_for_offset(text, base_off + m.start())
+                    add_finding(
+                        findings,
+                        lines,
+                        file_label,
+                        ln,
+                        "type.caps-tracking",
+                        "restraint",
+                        "warn",
+                        f"Uppercase transform in '{sel.strip()}' lacks positive letter-spacing.",
+                        "Add letter-spacing: 0.05em to 0.08em on a short kicker, or set in sentence case.",
+                    )
             # Check explicit hex contrast inside same CSS rule
             fg_m = re.search(r"(?<![a-z-])color\s*:\s*(#[0-9a-fA-F]{3,6})\b", body, re.I)
             bg_m = re.search(r"background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,6})\b", body, re.I)
@@ -370,6 +423,20 @@ def audit_text(text: str, file_label: str, allow_fonts: set[str] | None = None) 
                         f"Contrast {ratio:.2f}:1 between {fg_m.group(1)} and {bg_m.group(1)} in '{sel.strip()}' is under 4.5:1.",
                         "Darken muted ink or raise foreground/background contrast to at least 4.5:1.",
                     )
+
+    for m in re.finditer(r"\btransition-all\b", text):
+        ln = line_for_offset(text, m.start())
+        add_finding(
+            findings,
+            lines,
+            file_label,
+            ln,
+            "motion.timing",
+            "restraint",
+            "warn",
+            "Tailwind transition-all utility detected.",
+            "Replace with transition-colors or specific property transitions (120–180ms).",
+        )
 
     for m in re.finditer(r"hover:(?:-?translate-y-|scale-)", text):
         ln = line_for_offset(text, m.start())
@@ -548,6 +615,77 @@ def audit_text(text: str, file_label: str, allow_fonts: set[str] | None = None) 
                 f"Sparkle motif '{spark_m.group(0)}' used as UI decoration.",
                 "Remove sparkle/wand icons; depict the product's real object or state.",
             )
+
+        # a11y.semantics (clickable div/span without role, zoom-blocking viewport meta)
+        for m in re.finditer(r"<(div|span)\b([^>]*\bon(?:click|Click)\s*=[^>]*)>", copy_html, re.S):
+            attrs = m.group(2)
+            if not re.search(r'\brole=["\']?(?:button|link|menuitem|tab)', attrs, re.I):
+                pos = text.find(m.group(0))
+                ln = line_for_offset(text, pos if pos != -1 else 0)
+                add_finding(
+                    findings,
+                    lines,
+                    file_label,
+                    ln,
+                    "a11y.semantics",
+                    "accessibility",
+                    "error",
+                    f"Clickable <{m.group(1)}> lacks native button/link semantics.",
+                    "Replace with <button type=\"button\"> or <a href=\"...\"> for keyboard and screen-reader support.",
+                )
+
+        vp_m = re.search(r'<meta\b[^>]*name=["\']viewport["\'][^>]*content=["\']([^"\']+)["\']', text, re.I)
+        if vp_m and re.search(r"(?:user-scalable\s*=\s*no|maximum-scale\s*=\s*1(?:\.0+)?\b)", vp_m.group(1), re.I):
+            ln = line_for_offset(text, vp_m.start())
+            add_finding(
+                findings,
+                lines,
+                file_label,
+                ln,
+                "a11y.semantics",
+                "accessibility",
+                "error",
+                "Viewport meta disables pinch zoom (user-scalable=no or maximum-scale=1).",
+                "Allow zooming with content=\"width=device-width, initial-scale=1.0\".",
+            )
+
+        # type.tabular-numbers on standalone tables (skip when styles live in external CSS checked elsewhere)
+        tbl_m = re.search(r"<table\b", copy_html, re.I)
+        uses_external_css = bool(
+            re.search(r'<link\b[^>]+rel=["\']stylesheet["\']', text, re.I)
+            or re.search(r'import\s+["\'][^"\']+\.css', text)
+        )
+        if tbl_m and not uses_external_css and "tabular-nums" not in text:
+            pos = text.find(tbl_m.group(0))
+            ln = line_for_offset(text, pos if pos != -1 else 0)
+            add_finding(
+                findings,
+                lines,
+                file_label,
+                ln,
+                "type.numbers",
+                "hierarchy",
+                "warn",
+                "Data table present without font-variant-numeric: tabular-nums or Tailwind tabular-nums.",
+                "Set font-variant-numeric: tabular-nums on numeric/table columns so figures stay aligned.",
+            )
+
+        # type.caps-tracking on Tailwind uppercase class tokens
+        for cm in re.finditer(r'class(?:Name)?=["\']([^"\']*\buppercase\b[^"\']*)["\']', copy_html):
+            if not re.search(r"\btracking-(?:wide|wider|widest)\b", cm.group(1)):
+                pos = text.find(cm.group(0))
+                ln = line_for_offset(text, pos if pos != -1 else 0)
+                add_finding(
+                    findings,
+                    lines,
+                    file_label,
+                    ln,
+                    "type.caps-tracking",
+                    "restraint",
+                    "warn",
+                    "Tailwind 'uppercase' utility used without positive tracking-* spacing.",
+                    "Pair uppercase with tracking-wider on one short kicker or remove uppercase.",
+                )
 
     return findings
 

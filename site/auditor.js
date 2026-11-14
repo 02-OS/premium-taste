@@ -292,7 +292,7 @@
       );
     }
 
-    // 6. motion.hover, material.gray-card-shadow, color.contrast, motion.reduced
+    // 6. motion.hover, material.gray-card-shadow, color.contrast, motion.reduced, motion.timing, type.no-hairline-body, type.caps-tracking
     var hasMotion = false;
     var hasReducedMotion = text.indexOf("@media (prefers-reduced-motion") !== -1 || text.indexOf("motion-reduce:") !== -1;
     for (s = 0; s < cssSegments.length; s++) {
@@ -300,6 +300,17 @@
       var cleanSeg = segObj.seg.replace(/\/\*[\s\S]*?\*\//g, "");
       if (cleanSeg.indexOf("@keyframes") !== -1 || cleanSeg.indexOf("transition:") !== -1 || cleanSeg.indexOf("scroll-behavior:") !== -1) {
         hasMotion = true;
+      }
+      var trAllRe = /transition\s*:\s*all\b/gi;
+      while ((m = trAllRe.exec(cleanSeg)) !== null) {
+        add(
+          lineForOffset(text, segObj.base + m.index),
+          "motion.timing",
+          "restraint",
+          "warn",
+          "transition: all animates layout properties unnecessarily.",
+          "Specify exact transitions (color, border-color, opacity) keeping durations 120–180ms."
+        );
       }
       var hoverRe = /([^{}]+:hover[^{]*)\{([^}]+)\}/gi;
       while ((m = hoverRe.exec(cleanSeg)) !== null) {
@@ -328,6 +339,42 @@
             "Use flat paper, margins, and 1px hairlines; reserve shadow for overlays only."
           );
         }
+        var fwM = /font-weight\s*:\s*(100|200)\b/i.exec(body);
+        if (fwM) {
+          var fsM = /font-size\s*:\s*(\d+(?:\.\d+)?)px/i.exec(body);
+          var isReadingSel = /(?:^|[\s,])(body|p|li|dd|article|main|nav|label|button|a)\b/i.test(sel);
+          if (isReadingSel || (fsM && parseFloat(fsM[1]) <= 18)) {
+            add(
+              lineForOffset(text, segObj.base + m.index),
+              "type.no-hairline-body",
+              "accessibility",
+              "error",
+              "Hairline font-weight " + fwM[1] + " applied on '" + sel + "' (fails practical legibility below 18px).",
+              "Use weight 400 (or 500 for short UI labels) for readable text and navigation."
+            );
+          }
+        }
+        if (/text-transform\s*:\s*uppercase/i.test(body)) {
+          var lsM = /letter-spacing\s*:\s*([^;}]+)/i.exec(body);
+          var hasPosLs = false;
+          if (lsM) {
+            var lsRaw = lsM[1].trim();
+            var lsNum = /^([+-]?(?:\d+\.?\d*|\.\d+))\s*(?:px|em|rem)?\b/i.exec(lsRaw);
+            if ((lsNum && parseFloat(lsNum[1]) > 0) || lsRaw.indexOf("var(") === 0) {
+              hasPosLs = true;
+            }
+          }
+          if (!hasPosLs) {
+            add(
+              lineForOffset(text, segObj.base + m.index),
+              "type.caps-tracking",
+              "restraint",
+              "warn",
+              "Uppercase transform in '" + sel + "' lacks positive letter-spacing.",
+              "Add letter-spacing: 0.05em to 0.08em on a short kicker, or set in sentence case."
+            );
+          }
+        }
         var fgM = /(?:^|[;\s])color\s*:\s*(#[0-9a-fA-F]{3,6})\b/i.exec(body);
         var bgM = /background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,6})\b/i.exec(body);
         if (fgM && bgM) {
@@ -344,6 +391,18 @@
           }
         }
       }
+    }
+
+    var twTrAll = /\btransition-all\b/g;
+    while ((m = twTrAll.exec(text)) !== null) {
+      add(
+        lineForOffset(text, m.index),
+        "motion.timing",
+        "restraint",
+        "warn",
+        "Tailwind transition-all utility detected.",
+        "Replace with transition-colors or specific property transitions (120–180ms)."
+      );
     }
 
     var twLift = /hover:(?:-?translate-y-|scale-)/g;
@@ -495,6 +554,62 @@
           "Sparkle motif '" + sparkM[0] + "' used as UI decoration.",
           "Remove sparkle/wand icons; depict the product's real object or state."
         );
+      }
+
+      var divClickRe = /<(div|span)\b([^>]*\bon(?:click|Click)\s*=[^>]*)>/g;
+      while ((m = divClickRe.exec(copyHtml)) !== null) {
+        if (!/\brole=["']?(?:button|link|menuitem|tab)/i.test(m[2])) {
+          var divPos = text.indexOf(m[0]);
+          add(
+            lineForOffset(text, divPos !== -1 ? divPos : 0),
+            "a11y.semantics",
+            "accessibility",
+            "error",
+            "Clickable <" + m[1] + "> lacks native button/link semantics.",
+            "Replace with <button type=\"button\"> or <a href=\"...\"> for keyboard and screen-reader support."
+          );
+        }
+      }
+
+      var vpM = /<meta\b[^>]*name=["']viewport["'][^>]*content=["']([^"']+)["']/i.exec(text);
+      if (vpM && /(?:user-scalable\s*=\s*no|maximum-scale\s*=\s*1(?:\.0+)?\b)/i.test(vpM[1])) {
+        add(
+          lineForOffset(text, vpM.index),
+          "a11y.semantics",
+          "accessibility",
+          "error",
+          "Viewport meta disables pinch zoom (user-scalable=no or maximum-scale=1).",
+          "Allow zooming with content=\"width=device-width, initial-scale=1.0\"."
+        );
+      }
+
+      var tblM = /<table\b/i.exec(copyHtml);
+      var usesExtCss = /<link\b[^>]+rel=["']stylesheet["']/i.test(text) || /import\s+["'][^"']+\.css/.test(text);
+      if (tblM && !usesExtCss && text.indexOf("tabular-nums") === -1) {
+        var tblPos = text.indexOf(tblM[0]);
+        add(
+          lineForOffset(text, tblPos !== -1 ? tblPos : 0),
+          "type.numbers",
+          "hierarchy",
+          "warn",
+          "Data table present without font-variant-numeric: tabular-nums or Tailwind tabular-nums.",
+          "Set font-variant-numeric: tabular-nums on numeric/table columns so figures stay aligned."
+        );
+      }
+
+      var twUpperRe = /class(?:Name)?=["']([^"']*\buppercase\b[^"']*)["']/g;
+      while ((m = twUpperRe.exec(copyHtml)) !== null) {
+        if (!/\btracking-(?:wide|wider|widest)\b/.test(m[1])) {
+          var upPos = text.indexOf(m[0]);
+          add(
+            lineForOffset(text, upPos !== -1 ? upPos : 0),
+            "type.caps-tracking",
+            "restraint",
+            "warn",
+            "Tailwind 'uppercase' utility used without positive tracking-* spacing.",
+            "Pair uppercase with tracking-wider on one short kicker or remove uppercase."
+          );
+        }
       }
     }
 

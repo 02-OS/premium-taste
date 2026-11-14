@@ -10,12 +10,12 @@ Load the smallest set of files that can change the screen in front of you.
 2. Read `taste/index.yaml` if you need the map. Skip it when you already know the paths below.
 3. Name the job of **this screen** in one sentence. A job is a user outcome: "reserve a bowl from this firing", "see which revision failed", "read the essay". "Look premium" is not a job.
 4. Pick **one** direction in `taste/directions.yaml`. Use the `choose` block. If two could fit, pick the job of this screen, not the brand's mood.
-5. Read that direction's entry, then **one** reference from `taste/references/` whose `job` is close to this screen. Get the filename from `taste/references/index.yaml`. Do not read the whole gallery.
-6. Generate from the structural idea in the reference (what the page *is*), not from its palette.
-7. Run `skills/critique-ui.md` on the result. Revise structure before you revise color.
-8. If the product has no brand guide, you may apply the sample identity for the direction you chose: `tokens/quiet-luxury.DESIGN.md`, `tokens/cinematic-dark.DESIGN.md`, `tokens/precise-technical.DESIGN.md`, or `tokens/editorial-print.DESIGN.md`. Those files are sample identities, not the system.
+5. Load **one** matching reference from `taste/references/index.yaml` for visual structure (`What to steal`), AND—when building an app workflow or interactive screen (`pricing`, `table`, `empty-state`, `settings`, `destructive-confirmation`, `onboarding`, `cancel`, `command-palette`, `auth`)—load **one** pattern from `taste/patterns/index.yaml` for state/interaction mechanics. Do not load the whole gallery, and do not average conflicting styles into a bland middle (`uniqueness.no-averaging`).
+6. Write a short **Design Decision Ledger** before coding (`Direction`, `Reference`, `Pattern`, `Locked roles & surfaces 0..3`, `Imagery/Media slot`, `What I am diverging on`). Generate from the structural idea, not the reference palette.
+7. Run `skills/critique-ui.md` plus `python3 scripts/audit.py <changed-files>` (and `python3 scripts/critique_url.py <url>` if rendered). Revise structure before you revise color.
+8. If the product has no brand guide, apply the sample identity for the direction you chose: `tokens/quiet-luxury.DESIGN.md`, `tokens/cinematic-dark.DESIGN.md`, `tokens/precise-technical.DESIGN.md`, or `tokens/editorial-print.DESIGN.md`. Those files are sample identities, not the system.
 
-When you need the reasoning, read `taste/principles.md`. When you need a pass/fail check, read `taste/principles.yaml` and `taste/anti-patterns.yaml`. Cite rule ids in the critique (`hierarchy.one-primary-action`, `skeleton.saas-landing`).
+When you need the reasoning, read `taste/principles.md`. When you need a pass/fail check, read `taste/principles.yaml` and `taste/anti-patterns.yaml`. Cite rule ids in the critique (`hierarchy.one-primary-action`, `skeleton.saas-landing`, `uniqueness.calm-editorial-slop`).
 
 ## Precedence
 
@@ -70,8 +70,9 @@ Replacing Inter with Newsreader on the same skeleton is not a revision. Change w
 - `taste/principles.yaml` — the same rules as tests. Grep an id.
 - `taste/anti-patterns.yaml` — named failures with visible signals.
 - `taste/directions.yaml` — how to choose, and the first-screen recipe.
-- `taste/references/index.yaml` — retrieval. Filter on `direction` and `job`.
-- `skills/critique-ui.md` — the revise loop. Output its template.
+- `taste/references/index.yaml` — visual structure references. Filter on `direction` and `job`.
+- `taste/patterns/index.yaml` — concrete screen & multi-step flow recipes (pricing, tables, empty states, delete safety, settings, onboarding, cancel, command palette).
+- `skills/critique-ui.md` — the revise loop and litmus tests. Output its template.
 - `tokens/*.DESIGN.md` — optional example tokens in the Google Labs DESIGN.md format (`version: alpha`).
 - `examples/before-after.md` — a worked critique. Fictional products only.
 

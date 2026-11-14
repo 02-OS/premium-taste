@@ -18,6 +18,7 @@ load:
     - taste/anti-patterns.yaml
   pick_one:
     - taste/references/index.yaml
+    - taste/patterns/index.yaml
   optional_tokens:
     - tokens/quiet-luxury.DESIGN.md
     - tokens/cinematic-dark.DESIGN.md
@@ -25,20 +26,21 @@ load:
     - tokens/editorial-print.DESIGN.md
 
 do_not:
-  - Do not load every reference. One direction, one reference, for this screen.
+  - Do not load every reference or every pattern. One direction, one visual reference, and at most one screen/flow pattern for this screen.
   - Do not treat tokens as the taste layer. Tokens are examples of a direction already chosen.
-  - Do not blend quiet-luxury, cinematic-dark, precise-technical, and editorial-print on one screen.
+  - Do not blend quiet-luxury, cinematic-dark, precise-technical, and editorial-print into a neutral beige compromise (`uniqueness.no-averaging`, `uniqueness.anti-calming`).
   - Do not cite examples/rowan-* or examples/harbor-* as real products. They are fictional demonstrations.
 
 precedence:
   - Explicit user instruction and the product's real content.
   - The product's own DESIGN.md or brand guide, for color and type families.
   - taste/principles.yaml, for hierarchy, spacing, restraint, accessibility, and refusing generic skeletons.
-  - A single reference, for structure and material, not for a costume.
+  - A single reference, for structure and material, paired with a screen pattern when building app workflows.
 
 status:
-  principles: v1
+  principles: v2
   gallery: 18
+  patterns: 12
   gallery_target: "15-25"
   directions:
     - quiet-luxury

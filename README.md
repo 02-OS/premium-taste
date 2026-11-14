@@ -44,12 +44,12 @@ That copies the judgment files into `.premium-taste/` inside your project and wr
 Start at [AGENTS.md](AGENTS.md). The short version:
 
 1. Name the job of this screen in one sentence with a verb.
-2. Pick one direction in [taste/directions.yaml](taste/directions.yaml).
-3. Load one reference from [taste/references/index.yaml](taste/references/index.yaml). Steal a structure, not a palette.
-4. Generate.
-5. Run [skills/critique-ui.md](skills/critique-ui.md). Change the structure before the colors.
+2. Pick **one** direction in [taste/directions.yaml](taste/directions.yaml) (`quiet-luxury`, `cinematic-dark`, `precise-technical`, `editorial-print`). Refuse cross-direction calming mixes.
+3. Load **one** brand reference from [taste/references/index.yaml](taste/references/index.yaml) and (for recurring screens or multi-step flows) **one** pattern contract from [taste/patterns/index.yaml](taste/patterns/index.yaml).
+4. Record the 4-line Decision Ledger + 1 rule at risk, then generate.
+5. Verify against [skills/critique-ui.md](skills/critique-ui.md), `scripts/audit.py`, and `scripts/critique_url.py` (desktop `1280px` & mobile `375px` Visual Target Gate). Change structure before color.
 
-Claude Code also reads [CLAUDE.md](CLAUDE.md), which points here. Other agents (Cursor, Codex, Grok, and the rest) can be pointed at `AGENTS.md` and the skill file. Do not paste the principles into a host rule file. Link them, so a rule has one home.
+Portable skill discovery and plugin manifests are included at root (`skills/premium-taste/SKILL.md`, `.mcp.json`, `.claude-plugin/`, `.cursor-plugin/`, `.codex-plugin/`, `gemini-extension.json`), alongside [CLAUDE.md](CLAUDE.md). Do not paste all principles into a host rule file—link them so each rule has one home.
 
 If the product already has a `DESIGN.md` or a brand guide, that file wins on color and type families. Premium Taste still wins on hierarchy, spacing, restraint, accessibility, and refusing generic skeletons.
 
@@ -67,24 +67,27 @@ Cinematic dark is not a dark theme switch. Quiet luxury is not a serif and a lar
 ## What's in the repo
 
 ```
-AGENTS.md                 load order and precedence
-CLAUDE.md                 pointer for Claude Code
-taste/principles.md       the judgment, with a rule id on every test
-taste/principles.yaml     the same ids, as checks
-taste/anti-patterns.yaml  named cheap and generic patterns
-taste/directions.yaml     how to choose a direction
-taste/references/         annotated gallery and an index
-skills/critique-ui.md     generate → critique → revise
-tokens/                   four example DESIGN.md identities
-examples/                 a negative specimen, two afters, prompts
-site/                      interactive workbench, live auditor, token contrast studio, and catalog explorer
-install.sh                 zero-clone installer supporting --agent and --mcp
-scripts/audit.py           deterministic static UI rule checker (HTML, CSS, JSX, TSX, Vue, Svelte)
-scripts/critique_url.py    live Chromium CDP / HTTP fallback URL critique (contrast, fonts, overflow)
-scripts/mcp_server.py      stdlib JSON-RPC 2.0 MCP server (pick_direction, get_reference, get_tokens, audit_ui)
-scripts/check_catalog.py   ids and files still match
-scripts/install.py         install into another project and register agent rules / .mcp.json
-scripts/build_site_data.py sync site/data.js from taste/ and tokens/
+AGENTS.md                      load order, Decision Ledger & Visual Target Gate
+CLAUDE.md                      pointer for Claude Code
+skills/critique-ui.md          generate -> critique -> revise
+skills/premium-taste/SKILL.md  portable Agent Skill entrypoint
+taste/principles.md            the judgment, with a rule id on every test (68 rules)
+taste/principles.yaml          the same 68 ids, as checks
+taste/anti-patterns.yaml       30 named cheap and generic patterns
+taste/directions.yaml          how to choose a direction
+taste/references/              18 annotated product teardowns and index
+taste/patterns/                12 reusable screen & multi-step flow contracts
+tokens/                        4 Extended DESIGN.md packs (surfaces 0..3, scale, prompts)
+examples/                      negative specimens, afters, prompts
+site/                          interactive workbench, static auditor, DTCG/DESIGN.md studio
+install.sh                     zero-clone installer supporting --agent and --mcp
+scripts/audit.py               deterministic static UI rule checker (HTML, CSS, JSX, TSX, Vue, Svelte)
+scripts/critique_url.py        live Chromium CDP / HTTP fallback URL critique + PNG screenshots
+scripts/mcp_server.py          stdlib JSON-RPC 2.0 MCP server (6 tools over stdio)
+scripts/check_catalog.py       validates principles, refs, patterns, DESIGN.md & plugin manifests
+scripts/install.py             install into another project and register agent rules / .mcp.json
+scripts/build_site_data.py     sync site/data.js from taste/, patterns/ and tokens/
+.mcp.json + plugin manifests   .claude-plugin/, .cursor-plugin/, .codex-plugin/, gemini-extension.json
 ```
 
 Sample tokens for each direction live in `tokens/` and use the [DESIGN.md](https://github.com/google-labs-code/design.md) format. Load the one that matches the direction you chose, and only when the product has no guide of its own. They are examples of a direction, not the system.
@@ -126,7 +129,7 @@ Do not add a component, a React kit, or a new token file to make a principle eas
 
 ## Status
 
-v1 judgment, with a gallery of 18. The target range is 15–25. Each direction has at least three references and a sample token file in `tokens/`.
+v1.1 judgment: 68 principles, 30 anti-patterns, 18 product teardowns, 12 screen & flow patterns, 4 Extended `DESIGN.md` token packs (CSS, Tailwind v4, W3C DTCG JSON, Compact/Extended `DESIGN.md`), 6 MCP tools, and multi-platform plugin manifests.
 
 Principles are written for Latin-script UI. Hierarchy, proximity, contrast, and restraint still apply to other writing systems. Tracking and case rules do not.
 

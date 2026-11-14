@@ -1,0 +1,16 @@
+{
+  "name": "premium-taste-marketplace",
+  "owner": {
+    "name": "02-OS",
+    "url": "https://github.com/02-OS"
+  },
+  "plugins": [
+    {
+      "name": "premium-taste",
+      "source": "./",
+      "description": "UI taste benchmark, 68 design principles, 12 screen & flow patterns, 4 DESIGN.md token packs, and deterministic static/CDP UI auditors.",
+      "version": "1.1.0",
+      "keywords": ["ui", "design-system", "critique", "accessibility"]
+    }
+  ]
+}

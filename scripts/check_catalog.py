@@ -8,6 +8,7 @@ No dependencies beyond the standard library. Run from anywhere:
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 from pathlib import Path
@@ -132,6 +133,89 @@ def main() -> int:
             if f"      - {ref_id}" not in direction_text:
                 fail(errors, f"reference {ref_id} is not listed under a direction")
 
+    # Validate screen & flow patterns
+    pat_dir = ROOT / "taste" / "patterns"
+    pat_index = pat_dir / "index.yaml"
+    if not pat_index.exists():
+        fail(errors, "missing taste/patterns/index.yaml")
+        pat_ids: list[str] = []
+    else:
+        pat_index_text = read(pat_index)
+        pat_ids = re.findall(r"^\s+- id:\s*([a-z0-9-]+)\s*$", pat_index_text, re.M)
+        if len(pat_ids) != len(set(pat_ids)):
+            fail(errors, "duplicate id in taste/patterns/index.yaml")
+        pat_files = {
+            p.stem for p in pat_dir.glob("*.md") if p.name not in {"README.md", "_template.md"}
+        }
+        if set(pat_ids) != pat_files:
+            missing = pat_files - set(pat_ids)
+            extra = set(pat_ids) - pat_files
+            if missing:
+                fail(errors, f"pattern files not in index: {sorted(missing)}")
+            if extra:
+                fail(errors, f"pattern index ids with no file: {sorted(extra)}")
+        for pat_id in pat_ids:
+            path = pat_dir / f"{pat_id}.md"
+            if not path.exists():
+                continue
+            text = read(path)
+            matter = frontmatter(text)
+            m_ids = re.findall(r"^id:\s*(\S+)\s*$", matter, re.M)
+            if m_ids != [pat_id]:
+                fail(errors, f"patterns/{path.name} frontmatter id is {m_ids}, expected {pat_id}")
+            t_match = re.search(r"^type:\s*(\S+)\s*$", matter, re.M)
+            if not t_match or t_match.group(1) not in {"screen", "flow"}:
+                fail(errors, f"patterns/{path.name} must declare type: screen or flow")
+            for key in ("title:", "directions:", "job:", "tags:"):
+                if key not in matter:
+                    fail(errors, f"patterns/{path.name} frontmatter missing {key[:-1]}")
+            dir_block = re.search(r"^directions:\s*\n((?:\s+-\s+.+\n?)+)", matter, re.M)
+            if dir_block:
+                for d_ln in dir_block.group(1).splitlines():
+                    d_val = d_ln.strip().lstrip("- ").strip()
+                    if d_val and d_val not in DIRECTIONS:
+                        fail(errors, f"patterns/{path.name} references unknown direction {d_val}")
+            for heading in (
+                "## Layout & Hierarchy",
+                "## Required States & Mechanics",
+                "## What to Include",
+                "## What to Refuse",
+                "## Litmus Check",
+            ):
+                if heading not in text:
+                    fail(errors, f"patterns/{path.name} missing section {heading}")
+
+    # Validate Extended DESIGN.md token files
+    for direction in DIRECTIONS:
+        tpath = ROOT / "tokens" / f"{direction}.DESIGN.md"
+        if not tpath.exists():
+            fail(errors, f"missing tokens/{direction}.DESIGN.md")
+            continue
+        ttext = read(tpath)
+        tmatter = frontmatter(ttext)
+        for key in ("name:", "direction:", "scale:", "opentype:", "surfaces:", "colors:", "typography:"):
+            if key not in tmatter:
+                fail(errors, f"{tpath.name} frontmatter missing {key[:-1]}")
+        for heading in ("## Surfaces", "## Type Scale Detail", "## Imagery", "## Agent Prompt Guide"):
+            if heading not in ttext:
+                fail(errors, f"{tpath.name} missing section {heading}")
+
+    # Validate multi-platform plugin manifests if present
+    for rel in (
+        ".mcp.json",
+        ".claude-plugin/plugin.json",
+        ".claude-plugin/marketplace.json",
+        ".cursor-plugin/plugin.json",
+        ".codex-plugin/plugin.json",
+        "gemini-extension.json",
+    ):
+        mpath = ROOT / rel
+        if mpath.exists():
+            try:
+                json.loads(read(mpath))
+            except json.JSONDecodeError as exc:
+                fail(errors, f"invalid JSON in {rel}: {exc}")
+
     if errors:
         print(f"{len(errors)} catalog error(s):", file=sys.stderr)
         for message in errors:
@@ -140,7 +224,7 @@ def main() -> int:
 
     print(
         f"ok: {len(principle_ids)} principles, {len(anti_ids)} anti-patterns, "
-        f"{len(index_ids)} references"
+        f"{len(index_ids)} references, {len(pat_ids)} patterns"
     )
     return 0
 

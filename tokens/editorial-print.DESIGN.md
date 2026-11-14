@@ -1,18 +1,33 @@
 ---
 version: alpha
 name: Column
+direction: editorial-print
 description: >
   Example identity for the editorial-print direction. A paper sheet and a
   reading column. Not a newspaper's own stock, and not a copy of any
   reference. Use it only when the product has no guide of its own.
+scale:
+  name: Major Third
+  ratio: 1.25
+  base: 18px
+opentype:
+  numeric: oldstyle-nums proportional-nums
+  features: '"kern" 1, "liga" 1, "onum" 1'
+surfaces:
+  step-0-canvas: "#f6f1e8"
+  step-1-raised: "#fbf7f1"
+  step-2-subtle: "#ece4d6"
+  step-3-inverted: "#1c1917"
 colors:
   surface: "#f6f1e8"
   surface-raised: "#fbf7f1"
+  surface-subtle: "#ece4d6"
   ink: "#1c1917"
   ink-muted: "#4e4944"
   hairline: "#d8d0c4"
   line: "#8a8176"
   accent: "#1c1917"
+  on-accent: "#f6f1e8"
   danger: "#8d2f2f"
 typography:
   display:
@@ -20,26 +35,31 @@ typography:
     fontSize: 44px
     fontWeight: 500
     lineHeight: 1.15
+    letterSpacing: -0.015em
   title:
     fontFamily: "Source Serif 4, Iowan Old Style, Palatino, Georgia, serif"
     fontSize: 28px
     fontWeight: 500
     lineHeight: 1.25
+    letterSpacing: -0.01em
   body:
     fontFamily: "Source Serif 4, Iowan Old Style, Palatino, Georgia, serif"
     fontSize: 18px
     fontWeight: 400
     lineHeight: 1.55
+    letterSpacing: 0em
   ui:
     fontFamily: "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif"
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.4
+    letterSpacing: 0em
   caption:
     fontFamily: "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif"
     fontSize: 14px
     fontWeight: 400
     lineHeight: 1.4
+    letterSpacing: 0em
   kicker:
     fontFamily: "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif"
     fontSize: 13px
@@ -90,52 +110,81 @@ Open substitutes: Source Serif 4 and Public Sans, both widely available under th
 
 `ink` is text, the masthead, the rules that structure the page, links, and the rare filled button. `ink-muted` is the caption, the byline's secondary fact, and the footer. It clears 4.5:1 on `surface`. Do not lighten it into a gray that fails.
 
-`hairline` is a quiet seam (a footer, a thin separation inside a caption block). It is not strong enough to be the only edge of a control. `line` clears 3:1 on `surface` and is the field border. A rule that ends a piece or divides two stories is `ink`, 1px, not `hairline`.
+`hairline` is a quiet seam (`#d8d0c4`). `line` clears 3:1 on `surface` (`#8a8176`) and frames input controls. A rule that ends a piece or divides stories is `ink`, 1px, not `hairline`.
 
-`danger` is for a real error in a form. It is not a brand red. `accent` does not add a color. If you feel the page needs a hue, the piece is missing a photograph or a fact, not a token.
+`danger` is for a real error in a form. It is not a brand red.
+
+## Surfaces
+
+| Step | Token | Hex | Purpose |
+| --- | --- | --- | --- |
+| 0 | `surface` | `#f6f1e8` | Primary editorial paper sheet across masthead and columns |
+| 1 | `surface-raised` | `#fbf7f1` | Margin notes, popovers, and dropdown menus only |
+| 2 | `surface-subtle` | `#ece4d6` | Recessed index strips or archival table header bands |
+| 3 | `ink` | `#1c1917` | Story rules, masthead ink, and primary CTA fill (`#f6f1e8` ink) |
 
 ## Typography
 
-`display` is the story title, once. `title` is a section inside the piece. A front page that must rank several stories may add one size above `display` for the lead and keep the other headlines at `title` or below. Do not invent five sizes, and do not make every story `display`.
+`display` is the story title, once (`44px`, weight `500`). `title` is a section inside the piece (`28px`). `body` is Source Serif 4 at `18px`, ragged right, with a measure near `65–72ch`. Do not justify on the web.
 
-`body` is Source Serif 4 at 18px, ragged right, with a measure near 65–72 characters. Do not justify on the web. `caption` and `ui` are Public Sans. Captions sit under the figure, smaller in role than the prose, at 14px so they still pass. `kicker` is the only tracked style, and only one kicker may appear on a story. Tracking is a Latin-script device. In another writing system, drop the letter-spacing and keep the size. Do not set the kicker in all capitals as a habit, and do not set form labels in it.
+`caption` and `ui` are Public Sans at `14px`. `kicker` is the only tracked style (`+0.06em`), and only one kicker may appear on a story. Never set tracked caps on non-Latin scripts or form labels. Prose may enable `oldstyle-nums`; archival financial tables switch strictly to `tabular-nums`.
 
-No drop cap. Italic is for a real textual reason (a title of a work, a word the writer emphasized), not a second brand.
+## Type Scale Detail
+
+| Role | Family | Size | Weight | Line Height | Letter Spacing |
+| --- | --- | --- | --- | --- | --- |
+| Display | Source Serif 4 | 44px | 500 | 1.15 | -0.015em |
+| Title | Source Serif 4 | 28px | 500 | 1.25 | -0.01em |
+| Body | Source Serif 4 | 18px | 400 | 1.55 | 0em |
+| UI / Caption | Public Sans | 14px | 400 | 1.40 | 0em |
+| Kicker | Public Sans | 13px | 500 | 1.35 | 0.06em |
+
+## Imagery
+
+Documentary photography and archival plates earn full-column or bled width with square `0px` corners and explicit `width`/`height`. Always place a crisp `14px Public Sans` factual caption beneath the photograph naming subject and photographer. Never crop into glossy squircles or stack headline text over un-scrimmed photos.
 
 ## Layout
 
-A masthead in `ui`, small, at the top. Then either a full image with a `caption`, or the column. Page margin is at least 24px and grows with the viewport. The column's maximum measure stays. Do not stretch the paragraph to the window. Space above a section is `xl` or `2xl`. Space between paragraphs is `md`. The title sits `md` above the body.
-
-A newspaper front replaces the single column with several. The lead is wider. Secondary stories are narrower. Rules in `ink` separate them. The sheet color does not change between columns.
-
-On a narrow viewport there is one column. The image, if it is the way in, comes first. Type sizes stay. Do not center the stack.
+A masthead in `ui`, small, at the top. Then either a full image with a `caption`, or the reading column. Page margin is at least 24px and grows with the viewport. The column's maximum measure stays around `65ch–70ch`. Space above a section is `xl` (48px) or `2xl` (80px). Space between paragraphs is `md` (24px).
 
 ## Elevation & Depth
 
-Flat. Paper does not lift. `surface-raised` is a menu only. No shadow on a paragraph, a figure, or a pull quote. If a dialog must float, one soft shadow tinted toward `ink` at low opacity is the entire elevation system.
+Flat. Paper does not lift. `surface-raised` (`#fbf7f1`) is a menu only. No shadow on a paragraph, a figure, or a pull quote.
 
 ## Shapes
 
-Square. Figures, buttons, and fields use `rounded.none`. Do not round a photograph into a card.
+Square. Figures, buttons, and fields use `rounded.none` (0px).
 
 ## Components
 
-Prefer `button-quiet` in a story: ink text, an underline, no fill. `button-primary` is ink on paper, square, 44px, and at most one per view (a subscribe control in the masthead, not a second one at the end of every paragraph). Do not show both as equals.
+Prefer `button-quiet` in a story: ink text, an underline, no fill. `button-primary` is `#1c1917` on `#f6f1e8`, square, 44px, and at most one per view (a subscribe trigger in the masthead).
 
-`field` is rare. It has a visible label in `ui` above it, a `line` border, and no placeholder standing in as the label.
+`field` has a visible label in `ui` above it, a `1px solid #8a8176` border, and `2px` `#1c1917` focus ring.
 
-A pull quote, if the piece truly needs one, is `title` italic in the column, with an `ink` rule above and below. It is not a colored card.
-
-Focus is a 2px `ink` ring, offset from the control.
+A pull quote is `title` italic (`28px Source Serif 4`) inside the reading column, bracketed top and bottom by `1px solid #1c1917` rules—not a pastel callout box.
 
 ## Do's and Don'ts
 
-- Do keep one sheet color for the whole page.
-- Do set prose in the serif and apparatus in the sans.
-- Do leave the right edge ragged.
-- Do use a 1px ink rule where a card would have been.
-- Don't justify the column.
-- Don't add a link hue, a highlight behind a paragraph, or a tinted card.
-- Don't combine a drop cap, a pull quote, a huge headline, and a texture on the same page.
-- Don't set body text below 16px. This sample uses 18px.
-- Don't center a headline over an image with a gradient scrim.
+- Do keep one sheet color (`#f6f1e8`) for the whole page.
+- Do set prose in Source Serif 4 and apparatus in Public Sans.
+- Do leave the right prose edge ragged (`text-align: start`).
+- Do use a `1px` `#1c1917` rule where a card border would have been.
+- Don't pass the Editorial Test fail state (`uniqueness.calm-editorial-slop`): never dress an operational app or SaaS landing in editorial parchment without editorial substance.
+- Don't justify the column or set body text below 16px (`18px` standard).
+- Don't combine a drop cap, a pull quote card, a huge headline, and textured noise together.
+
+## Agent Prompt Guide
+
+Quick Color Reference:
+- sheet canvas: `#f6f1e8` (`--pt-surface`)
+- note / popover surface: `#fbf7f1` (`--pt-surface-raised`)
+- archival strip: `#ece4d6` (`--pt-surface-subtle`)
+- primary ink & structural rule: `#1c1917` (`--pt-ink`)
+- bylines & captions: `#4e4944` (`--pt-ink-muted`)
+- real error text: `#8d2f2f` (`--pt-danger`)
+
+Example Component Prompts:
+1. Build an essay opener on `#f6f1e8`: single hairline masthead (`52px`, `1px solid #1c1917` bottom border), centered or left-aligned `65ch` column opening with one `13px Public Sans` kicker (`+0.06em`), a `44px Source Serif 4` weight 500 headline, standfirst paragraph (`20px`), and author/date line in `#4e4944`.
+2. Build a full-width documentary figure block inside the column: sharp `0px` image with declared dimensions, `8px` spacing to a `14px Public Sans` caption (`#4e4944`) and trailing italic photographer credit, closed by a `1px solid #d8d0c4` hairline.
+3. Build a typographic pull quote: `28px Source Serif 4` italic quote in `#1c1917`, `24px` vertical padding, `1px solid #1c1917` border-top and border-bottom, zero background fill or side bar.
+4. Build a dispatch archive list below a `1px solid #1c1917` divider: `1px solid #d8d0c4` rows pairing right-aligned `tabular-nums` date (`14px Public Sans #4e4944`), story headline (`20px Source Serif 4`), and section tag—zero card boxes.

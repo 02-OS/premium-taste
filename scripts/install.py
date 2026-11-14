@@ -25,6 +25,7 @@ CORE_DIRS = ("taste", "tokens")
 CORE_FILES = (
     "AGENTS.md",
     "skills/critique-ui.md",
+    "skills/premium-taste/SKILL.md",
     "scripts/audit.py",
     "scripts/critique_url.py",
     "scripts/mcp_server.py",
@@ -34,7 +35,7 @@ CORE_FILES = (
 AGENTS_POINTER = """<!-- premium-taste:start -->
 ## UI and Design Judgment (Premium Taste)
 
-Before creating or restyling any interface, read `.premium-taste/AGENTS.md` and follow its load order (job -> 1 direction -> 1 reference -> generate -> `.premium-taste/skills/critique-ui.md`). After generating UI, run `python3 .premium-taste/scripts/audit.py <changed-files>`.
+Before creating or restyling any interface, read `.premium-taste/AGENTS.md` and follow its load order (job -> 1 direction -> 1 reference -> optional pattern -> Decision Ledger -> generate -> `.premium-taste/skills/critique-ui.md`). After generating UI, run `python3 .premium-taste/scripts/audit.py <changed-files>`.
 <!-- premium-taste:end -->
 """
 
@@ -50,10 +51,10 @@ description: >
 Read `.premium-taste/AGENTS.md` and follow its load order before generating UI:
 
 1. Name the job of this screen in one sentence with a verb.
-2. Pick one direction in `.premium-taste/taste/directions.yaml`.
-3. Load one matching reference from `.premium-taste/taste/references/index.yaml`.
-4. Generate from the structural idea, not the reference palette.
-5. Critique and revise against `.premium-taste/skills/critique-ui.md`, citing rule ids from `.premium-taste/taste/principles.yaml`, then run `python3 .premium-taste/scripts/audit.py <files>`.
+2. Pick **1** direction in `.premium-taste/taste/directions.yaml`.
+3. Load **1** matching reference in `.premium-taste/taste/references/index.yaml` and (when recurring) **1** pattern in `.premium-taste/taste/patterns/index.yaml`.
+4. Record the 4-line Decision Ledger (`Direction`, `Reference`, `Pattern`, `1 rule at risk`) and generate from the structural idea, not the reference palette.
+5. Critique and revise against `.premium-taste/skills/critique-ui.md`, citing rule ids from `.premium-taste/taste/principles.yaml`, then run `python3 .premium-taste/scripts/audit.py <files>` (and `critique_url.py <url>` if a server runs).
 """
 
 CURSOR_RULE = """---
@@ -65,7 +66,7 @@ alwaysApply: false
 Before building or restyling any UI screen:
 
 1. Read `.premium-taste/AGENTS.md` and follow its load order.
-2. Pick one direction in `.premium-taste/taste/directions.yaml` and one reference in `.premium-taste/taste/references/index.yaml`.
+2. Pick 1 direction in `.premium-taste/taste/directions.yaml`, 1 reference in `.premium-taste/taste/references/index.yaml`, and (when recurring) 1 pattern in `.premium-taste/taste/patterns/index.yaml`.
 3. Refuse anti-patterns in `.premium-taste/taste/anti-patterns.yaml`.
 4. Run `python3 .premium-taste/scripts/audit.py <files>` and `.premium-taste/skills/critique-ui.md` on the result, applying structural revisions before color tweaks.
 """
@@ -74,8 +75,8 @@ AGENT_SKILL = """---
 name: premium-taste
 description: >
   Apply Premium Taste judgment before building or refining any UI screen. Picks
-  one direction, loads one reference structure, avoids generic SaaS skeletons,
-  and runs a rule-based UI critique.
+  one direction, loads one reference structure and optional screen/flow pattern,
+  avoids generic SaaS skeletons, and runs deterministic static/browser UI audits.
 ---
 
 # Premium Taste
@@ -84,9 +85,9 @@ Read `.premium-taste/AGENTS.md` first and follow its load order strictly:
 
 1. Name the job of the screen in one sentence with a verb.
 2. Pick **one** direction in `.premium-taste/taste/directions.yaml`.
-3. Load **one** reference from `.premium-taste/taste/references/index.yaml` whose job is close. Steal its structure, not its palette or fonts.
-4. If the project has no `DESIGN.md` or brand guide, you may load the matching `.premium-taste/tokens/*.DESIGN.md` sample identity.
-5. After generating, run `python3 .premium-taste/scripts/audit.py <files>` and `.premium-taste/skills/critique-ui.md`, fixing structure before color.
+3. Load **one** reference from `.premium-taste/taste/references/index.yaml` whose job is close, plus **one** pattern from `.premium-taste/taste/patterns/index.yaml` when building a recurring screen or multi-step flow.
+4. If the project has no `DESIGN.md` or brand guide, load the matching `.premium-taste/tokens/*.DESIGN.md` sample identity.
+5. After generating, run `python3 .premium-taste/scripts/audit.py <files>` (and `.premium-taste/scripts/critique_url.py <url>` for rendered layouts) and review `.premium-taste/skills/critique-ui.md`.
 """
 
 
