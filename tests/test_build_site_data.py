@@ -24,16 +24,20 @@ class BuildSiteDataTests(unittest.TestCase):
         ])
         self.assertEqual(len(payload["choose"]), 6)
         self.assertIn("generic skeleton", payload["registerNote"])
-        self.assertEqual(payload["counts"]["principles"], 62)
-        self.assertEqual(payload["counts"]["antiPatterns"], 25)
+        self.assertEqual(payload["counts"]["principles"], 68)
+        self.assertEqual(payload["counts"]["antiPatterns"], 30)
         self.assertEqual(payload["counts"]["references"], 18)
+        self.assertEqual(payload["counts"]["patterns"], 12)
         self.assertEqual(payload["counts"]["directions"], 4)
 
     def test_dtcg_keeps_font_style_and_design_md_keeps_status_colors(self) -> None:
         pack = build_site_data.parse_tokens()["cinematic-dark"]
         exported = build_site_data.render_dtcg(pack)
         self.assertEqual(exported["typography"]["credit"]["$value"]["fontStyle"], "italic")
-        rendered = build_site_data.render_design_md(build_site_data.parse_tokens()["precise-technical"])
+        rendered = build_site_data.render_design_md(
+            "precise-technical",
+            build_site_data.parse_tokens()["precise-technical"],
+        )
         self.assertIn('danger:', rendered)
         self.assertIn('warning:', rendered)
 

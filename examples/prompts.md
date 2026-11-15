@@ -18,15 +18,16 @@ Real content: [names, prices, numbers, states]
 Read AGENTS.md in the Premium Taste repo and follow its load order.
 
 This screen is a [job] for [who].
-Direction: look up the closest one in taste/directions.yaml. Do not blend directions.
-Load one reference from taste/references/index.yaml whose job is close to this screen.
-Steal the structural decision named in that file. Do not copy its palette or its font.
+Direction: look up the closest one in taste/directions.yaml. Do not blend directions or default to warm editorial cream on utilitarian software.
+Reference: load one reference from taste/references/index.yaml for structure (`What to steal`), and do not copy its palette or hairline font weight.
+Pattern: if this screen is an interactive flow (pricing, table filters, empty state, settings, delete confirm, onboarding), load one matching pattern from taste/patterns/index.yaml.
 
-Content you must use, and must not invent past:
+Output a short Design Decision Ledger (Surfaces 0..3, Type scale, Media role, Divergence), then build cleanly around:
 - [real nouns, prices, names, states]
 
 Then run skills/critique-ui/SKILL.md on your result and apply the required changes.
 Output the critique template before the code, and cite rule ids.
+Also run python3 scripts/audit.py (and scripts/critique_url.py if served locally) before finishing.
 ```
 
 ## Critique something that already exists

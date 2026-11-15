@@ -73,7 +73,7 @@ class McpServerTests(unittest.TestCase):
         names = [item["name"] for item in tools["result"]["tools"]]
         self.assertEqual(
             names,
-            ["pick_direction", "get_reference", "get_tokens", "get_pattern", "audit_ui", "verify_url"],
+            ["pick_direction", "get_reference", "get_pattern", "get_tokens", "audit_ui", "verify_url"],
         )
         init = mcp_server.handle_request(
             {"jsonrpc": "2.0", "id": 2, "method": "initialize", "params": {}},

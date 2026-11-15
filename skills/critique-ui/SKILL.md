@@ -28,16 +28,25 @@ Do not run this on a non-visual change (a parser, a migration, a test). Do not e
 - The job of this screen, in one sentence with a verb.
 - One direction id.
 - One reference id, already loaded, or "none yet" if you are about to pick one.
+- One pattern id from `taste/patterns/index.yaml` when reviewing an interactive workflow (`pricing-table`, `data-table-filters`, `empty-state`, `destructive-confirmation`, `settings-form`, etc.), or "none".
+- Visual Target Gate: what must not drift (`canvas surface`, `type roles`, `layout skeleton`, `accent role`, `media slot`).
 
 If the job sentence uses "and" twice, that is the first finding (`hierarchy.one-job`). Do not score the rest until you name a single job or split the screen.
 
 ## Procedure
 
-### 1. Name the structure
+### 1. Name the structure & run the six litmus tests
 
 Write one sentence: "This page is ___." If the sentence is a feature list, the finding is `uniqueness.one-idea` and the revision is structural. Cosmetic notes wait.
 
-Check the first screen against `skeleton.saas-landing` and `layout.dashboard-costume`. A match is a structural fail. Say so in the first required change.
+Check the first screen against `skeleton.saas-landing`, `layout.dashboard-costume`, and `uniqueness.calm-editorial-slop`. Then test the artifact against six quick gates:
+
+- **Card test (`material.hairline-before-box`):** If removing border, radius, background, and shadow does not hurt understanding, delete the card.
+- **Editorial test (`uniqueness.anti-calming`):** If replacing the product logo with a coffee shop or boutique hotel still makes the hero plausible, warm cream + serif is a costume.
+- **Image test (`uniqueness.media-preservation`):** If an image slot works fine deleted—or uses a CSS gradient blob—make the subject dominant or drop photography altogether.
+- **Copy test (`uniqueness.specific-copy`):** If deleting 30% of copy sharpens the page, keep deleting.
+- **Brand/Identity test (`uniqueness.diverge-from-reference`):** Covering navigation chrome still leaves this product unmistakably distinguishable from another site in the same direction.
+- **Anti-averaging test (`uniqueness.no-averaging`):** Sharp traits from the chosen direction (0px corners, dense row alignment, work-first dark room) were kept rather than softened into medium beige.
 
 ### 2. Score six dimensions
 
@@ -161,7 +170,14 @@ Use this shape. Omit a section only when it is empty.
 Job:
 Direction:
 Reference:
+Pattern:
 Structure: This page is ___.
+
+Decision Ledger
+- Canvas & Surfaces: [step 0..3 / locked role]
+- Type & Scale: [at most 2 families + ratios + tabular numerals]
+- Media / Evidence: [photo / UI proof / SVG diagram role]
+- Divergence: [what differs from reference to fit this product]
 
 Scores
 - Hierarchy: N — one sentence, with an id

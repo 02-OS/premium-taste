@@ -314,6 +314,22 @@ Do not reach for a face on the costume list above unless it is already the produ
 
 **Fix:** System stack or one of the quieter open faces, and spend the effort on structure.
 
+### `type.no-hairline-body`
+
+Reading copy, labels, and navigation at 18px or below never use hairline weights (`font-weight: 100` or `200`). Even if an automated extraction of a reference captures an ultra-thin webfont at 13px, screens render thin strokes inconsistently and fail practical legibility.
+
+**Test:** Body, paragraph, list, or navigation selectors set `font-weight` below 300 at `<= 18px`.
+
+**Fix:** Set running copy and navigation to weight 400 (or 500 for short UI labels) while reserving lighter display weights for large headings.
+
+### `type.caps-tracking`
+
+Any element using `text-transform: uppercase` needs positive letter-spacing (`>= 0.04em`) so capitals breathe optically, and uppercase kickers belong on at most one eyebrow or table header—never full sentences or paragraphs.
+
+**Test:** `text-transform: uppercase` appears with zero letter-spacing or on long copy.
+
+**Fix:** Add `+0.05em` to `+0.08em` tracking on a single short kicker, or set the element in sentence case.
+
 ---
 
 ## Density
@@ -551,6 +567,30 @@ The reference supplies a structure. The product supplies the content and at leas
 
 **Fix:** Rebuild around this product's object or data. Keep the lesson, drop the costume.
 
+### `uniqueness.no-averaging`
+
+Do not average conflicting references into a safe middle. When studying a bold architectural site alongside a softer secondary pattern, lock one dominant direction and keep its sharp trait intact (sharp corners, high contrast, dense row cadence). Borrow at most one concrete detail from a secondary reference without diluting the primary character.
+
+**Test:** Two incompatible styles merged into generic rounded cards on beige background.
+
+**Fix:** Name the single dominant direction and state explicitly which rule from the secondary reference was omitted to avoid mush.
+
+### `uniqueness.anti-calming`
+
+Do not treat warm cream paper, olive/terracotta accents, and editorial display serifs as a universal badge of good taste (`uniqueness.calm-editorial-slop`). Run the Editorial Test: if swapping your product logo for a coffee shop, boutique hotel, or literary magazine still makes the hero plausible, the screen is dressing a tool or utility in editorial drag.
+
+**Test:** A developer tool, billing workflow, or ops dashboard opens with warm beige marketing copy instead of live product proof or controls.
+
+**Fix:** Switch to `precise-technical` (or the direction the screen job actually asks for) and place the real interface or domain fact in the first viewport.
+
+### `uniqueness.media-preservation`
+
+When the chosen direction or reference depends on photography, schematic plates, or product screenshots, preserve that media slot with real imagery, authentic data graphics, or a clearly dimensioned art-directed frame. Never fake imagery with empty CSS boxes, gradient blobs, or decorative placeholders (`material.fake-media`).
+
+**Test:** An object or gallery layout ships blurred gradients or generic SVG shapes in the primary media slot.
+
+**Fix:** Supply the genuine image, structured diagram/SVG grounded in product data, or explicit aspect-ratio media slot specification.
+
 ---
 
 ## Product fit
@@ -663,6 +703,14 @@ Reading order and tab order follow the visual order. CSS reordering that breaks 
 
 **Fix:** Put the DOM in the visual order. Use layout that does not reorder meaning.
 
+### `a11y.semantics`
+
+Interactive triggers use semantic `<button type="button">` or `<a href>` (never clickable `<div onClick>` or `<span onClick>`), images declare explicit `width` and `height` to prevent layout shift, anchored headings account for sticky bars (`scroll-margin-top`), and viewport meta never locks pinch zoom (`user-scalable=no`).
+
+**Test:** Clickable `<div>`/`<span>`, zoom-locking meta tags, or sticky headers clipping `#anchor` targets fail.
+
+**Fix:** Replace clickable divs with semantic buttons/links, set `scroll-margin-top`, keep zoom enabled, and declare explicit image dimensions.
+
 ---
 
 ## Anti-patterns
@@ -684,9 +732,12 @@ Each id is specified in [`anti-patterns.yaml`](anti-patterns.yaml). The catalog 
 | `type.three-voices` | Display, serif, mono, and a script | Two families, with roles |
 | `type.all-caps-everything` | Tracked caps on every label | One kicker, or none |
 | `type.tiny-gray` | Gray body "for elegance" | Mute one step, keep 4.5:1 |
+| `type.hairline-body` | Ultra-thin weight 100/200 copy below 18px | Weight 400 body, 500 short UI labels |
+| `type.caps-untracked` | Uppercase labels with zero tracking | Add +0.05em–0.08em tracking or sentence case |
 | `material.gray-card-shadow` | `gray-50` page, white `rounded-2xl` cards, `shadow-sm` | Flat paper, hairlines, real margin |
 | `material.glass-on-flat` | Blur card on a flat gradient | Delete the glass |
 | `material.icon-tile` | Icon in a tinted rounded square, title, sentence | A sentence, or a real object |
+| `material.fake-media` | Empty CSS boxes or gradient blobs in a media slot | Real photography, product proof, or SVG diagram |
 | `motion.stagger-fade` | Sections fade up on load | Content is there immediately |
 | `motion.hover-lift` | Cards scale and shadow on hover | Recolor or underline |
 | `content.fake-proof` | Gray logo cloud, "10,000+ teams", stock praise | A real fact, or nothing |
@@ -694,8 +745,10 @@ Each id is specified in [`anti-patterns.yaml`](anti-patterns.yaml). The catalog 
 | `chrome.two-primaries` | Two filled buttons | One filled, one text |
 | `chrome.badge-pile` | New, AI, Pro, Beta on one title | One fact, in the title or under it |
 | `chrome.sparkle` | A sparkle icon as the concept | The product's object |
+| `uniqueness.calm-editorial-slop` | Warm cream + serif costume on a utilitarian SaaS/tool | Pass the Editorial Test; match product utility |
 | `a11y.placeholder-label` | Placeholder is the only label | A visible label |
 | `a11y.focus-removed` | No focus ring | A 2px offset ring |
+| `a11y.div-button` | `<div onClick>`, zoom disabled, sticky anchor overlap | Native button/link, zoom enabled, scroll-margin-top |
 
 ---
 

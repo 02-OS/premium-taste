@@ -175,3 +175,35 @@ anti_patterns:
       - outline: none, or an equivalent, with no focus-visible replacement.
     why: Keyboard users cannot see where they are. The page also looks broken when it is tabbed, which it will be.
     instead: A 2px offset ring in ink or the accent, designed once.
+
+  - id: uniqueness.calm-editorial-slop
+    also_called: warm beige default for every app
+    signals:
+      - Warm ivory paper, olive or clay accent, and editorial serif display applied to a generic analytics tool, developer platform, or checkout form.
+      - Replacing the brand name with a coffee shop or boutique hotel still makes the hero plausible.
+    why: AI agents reach for warm paper + editorial serif as a lazy shortcut for "good taste", detaching styling from the actual product job.
+    instead: Pass the Editorial Test. Match precise-technical density and direct product proof when the buyer came to operate a tool or evaluate metrics.
+
+  - id: type.hairline-body
+    signals:
+      - Font weight 100 or 200 on running copy, metadata, or links below 18px copied literally from an automated style dump.
+    why: Subpixel antialiasing turns thin weights into unreadable washed-out strokes on standard LCD displays and fails practical accessibility.
+    instead: Use regular (400) or medium (500) for readable copy and navigation while keeping display restraint on large headings only.
+
+  - id: type.caps-untracked
+    signals:
+      - Uppercase labels or buttons set at default letter-spacing (0em) or long sentences forced into all caps.
+    why: Untracked uppercase letters collide optically and degrade scanning speed.
+    instead: Add +0.05em to +0.08em letter-spacing on at most one short kicker, or set labels in sentence case.
+
+  - id: material.fake-media
+    signals:
+      - Empty CSS blurred gradients, hand-coded decorative wave divs, or fake wireframe rectangles occupying a reference slot meant for photography or real UI proof.
+    why: Weak CSS approximations call attention to missing product substance instead of supporting the subject.
+    instead: Supply genuine photography, real product screenshots, accurate SVG schematics, or clearly specified art-directed media slots.
+
+  - id: a11y.div-button
+    signals:
+      - Interactive triggers implemented as `<div onClick>` or `<span onClick>`, viewport disabling user zoom, or sticky bars obscuring `#anchor` targets.
+    why: Breaks keyboard activation, screen-reader role announcements, middle-click navigation, and accessible zooming.
+    instead: Use semantic `<button type="button">` or `<a href>`, keep zoom enabled, and set `scroll-margin-top` on anchored headings.

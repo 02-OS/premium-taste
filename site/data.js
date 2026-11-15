@@ -1,9 +1,10 @@
 // Generated from taste/ and tokens/ by scripts/build_site_data.py.
 window.PREMIUM_TASTE_DATA = {
   "counts": {
-    "principles": 62,
-    "antiPatterns": 25,
+    "principles": 68,
+    "antiPatterns": 30,
     "references": 18,
+    "patterns": 12,
     "directions": 4
   },
   "directions": [
@@ -657,6 +658,485 @@ window.PREMIUM_TASTE_DATA = {
       ]
     }
   ],
+  "patterns": [
+    {
+      "id": "pricing-table",
+      "title": "SaaS Pricing & Tier Comparison",
+      "type": "screen",
+      "directions": [
+        "precise-technical",
+        "quiet-luxury"
+      ],
+      "job": "compare plans and pick the right billing tier",
+      "tags": [
+        "pricing",
+        "billing",
+        "comparison",
+        "toggle",
+        "conversion"
+      ],
+      "summary": "Let the buyer identify tier boundaries, per-unit costs, and upgrade triggers in under 15 seconds without guessing hidden limits.",
+      "layout": [
+        "Open with the billing period control (`Monthly` / `Annual`, showing exact `%` or dollar delta inside the toggle label) and actual tier columns (2 columns if there are 2 tiers, 3 if 3—never pad a ghost tier).",
+        "Set numeric prices with `font-variant-numeric: tabular-nums` and align unit subtitles (`per seat / month`) beneath the figure so billing swaps do not shift column width.",
+        "Separate the upper plan strip from the compact specification matrix below using hairlines rather than stacking extra marketing banners between them."
+      ],
+      "states": [
+        "Switching `Monthly` / `Annual` updates prices, totals, and query/URL hash immediately (`?billing=annual`) and keeps row heights identical.",
+        "Emphasize at most **one** self-serve primary tier visually (1 border weight step or subtle surface shift), keeping secondary CTA treatments quieter (`chrome.two-primaries` avoided when Enterprise uses a text link or quiet outline).",
+        "Repeat selected plan, billing cadence, and renewal terms cleanly at checkout handoff."
+      ],
+      "include": [
+        "One specific objection-killer line directly beneath each plan's primary CTA (e.g., `\"No credit card for 14 days · Cancel in Settings\"`).",
+        "Hard operational limits up front (seats, retention days, rate limits) before soft feature lists.",
+        "Dedicated procurement/security row for Enterprise (`SOC 2 Type II`, `SAML SSO`, `DPA`, `Custom SLA`) rather than hiding compliance in the footer."
+      ],
+      "refuse": [
+        "Centered hero filler or fake logo clouds pushing the plan columns below the fold (`hierarchy.first-screen`, `content.fake-proof`).",
+        "`Most Popular` rainbow badge piles on two or more columns (`chrome.badge-pile`).",
+        "Inaccurate `\"Save 20%\"` math or hiding per-seat minimums inside tooltips."
+      ],
+      "litmus": [
+        "Switching between Monthly and Annual changes only the numbers and saving string—zero vertical layout jump and zero ambiguous limit wording."
+      ]
+    },
+    {
+      "id": "empty-state",
+      "title": "First-Run & Zero-Data Empty State",
+      "type": "screen",
+      "directions": [
+        "precise-technical",
+        "quiet-luxury",
+        "cinematic-dark"
+      ],
+      "job": "understand why this list is empty and create the first real record",
+      "tags": [
+        "empty",
+        "zero-state",
+        "onboarding",
+        "first-run"
+      ],
+      "summary": "Distinguish clearly between **never created**, **cleared by search/filters**, and **lacking permission**, and hand the user one concrete step out.",
+      "layout": [
+        "Render the empty message **inside the real destination shell** (table header, sidebar navigation, or gallery canvas already visible) so the user understands what will live here once populated.",
+        "Keep copy to two concise blocks: state what is missing (`\"No deployment webhooks configured for staging\"`), and explain what the primary action creates.",
+        "Place at most **one** filled action button (`Add webhook`); pair an optional template/sample import as a quiet secondary link beside it."
+      ],
+      "states": [
+        "**Zero records vs zero search hits:** When filters hide items, never show the first-run welcome message—show `\"No runs match status:failed\"` with a one-click `Clear 2 filters` action.",
+        "**No permissions:** Explain which role grants access instead of offering a broken Create button.",
+        "Preserve keyboard focus cleanly when transitioning from empty state into inline creation or a modal drawer."
+      ],
+      "include": [
+        "One honest example or structural preview (for tools, a pre-filled starter snippet or 1-click CLI command; for content apps, one crisp line describing the artifact).",
+        "Exact copy for the empty reason instead of cute metaphors (`\"Nothing here yet!\"`)."
+      ],
+      "refuse": [
+        "Floating cartoon blobs, generic sparkle icons (`chrome.sparkle`), or oversized illustrations pushing the button off screen (`material.fake-media`).",
+        "Multi-card tutorial carousels blocking a single empty collection."
+      ],
+      "litmus": [
+        "Temporarily hiding all filters vs removing all database rows shows two distinctly helpful messages, each pointing at one concrete fix."
+      ]
+    },
+    {
+      "id": "data-table-filters",
+      "title": "Searchable Ledger & Filterable Data Table",
+      "type": "screen",
+      "directions": [
+        "precise-technical",
+        "editorial-print"
+      ],
+      "job": "slice, sort, and inspect dense operational records",
+      "tags": [
+        "table",
+        "filters",
+        "search",
+        "tabular-nums",
+        "sorting",
+        "url-state"
+      ],
+      "summary": "Put the filter bar and aligned rows immediately at the top of the viewport so operators inspect, sort, and act on individual records without dashboard ceremony.",
+      "layout": [
+        "Start on the collection title, compact filter bar (`Search`, scoped selects/tabs, active filter count), and the repeating table/list itself—no greeting banner or four summary KPI cards (`layout.dashboard-costume`).",
+        "Share a fixed row height (minimum `40px`, comfortable `44px`), horizontal divider hairlines, and `font-variant-numeric: tabular-nums` across numeric, date, and ID columns (`density.not-cramped`, `type.numbers`).",
+        "Left-align text columns, right-align or decimal-align counts/latencies/prices, and keep status in a consistent column with word + quiet hue mark (`a11y.not-color-alone`)."
+      ],
+      "states": [
+        "**URL state sync:** Encode active search, filters, sort column/direction, and page inside URL query parameters so reload, back button, and shared links restore exact state.",
+        "**Sortable headers:** Use real `<button>` inside `<th scope=\"col\">` with explicit ascending/descending `aria-sort` state indicators.",
+        "**Responsive narrow viewport:** Pin the primary identifier and status columns or wrap the table in an accessible horizontal scroll region (`tabindex=\"0\"`, `role=\"region\"`) rather than hiding half the data.",
+        "**Bulk selection (if supported):** Surface a conditional toolbar only when `>= 1` row is selected, announcing selection count politely."
+      ],
+      "include": [
+        "Explicit match count (`\"14 of 208 builds shown\"`) and a `Clear filters` escape hatch whenever active filters narrow results.",
+        "Live row timestamps in a unambiguous fixed or localized `Intl.DateTimeFormat` format plus hover/title ISO timestamp for precision debugging."
+      ],
+      "refuse": [
+        "Nested rounded cards around each table row (`layout.nested-cards`, `material.gray-card-shadow`).",
+        "Filled rainbow status pills louder than the row identifier (`color.rainbow-pills`).",
+        "Full client-side DOM dumps exceeding 50–100 unpaginated/unvirtualized heavy rows."
+      ],
+      "litmus": [
+        "Refreshing the browser preserves filter/sort state, digits line up vertically down every column, and hiding color still leaves every row status unambiguous."
+      ]
+    },
+    {
+      "id": "destructive-confirmation",
+      "title": "Destructive Action Confirmation & Recovery",
+      "type": "flow",
+      "directions": [
+        "precise-technical",
+        "quiet-luxury"
+      ],
+      "job": "verify blast radius before irreversible deletion or revocation",
+      "tags": [
+        "delete",
+        "confirmation",
+        "modal",
+        "undo",
+        "safety"
+      ],
+      "summary": "Prevent accidental irreversible loss without fatiguing operators with warning theater on trivial actions.",
+      "layout": [
+        "For **reversible** removals (archiving, removing a tag, soft deleting a draft), execute immediately without a modal and present a polite toast (`role=\"status\"`, `aria-live=\"polite\"`) with an inline **`Undo`** action.",
+        "Reserve confirmation dialogs for **irreversible** or cascading mutations (deleting a workspace, revoking an active API key, dropping a production database).",
+        "Inside the modal, state the exact **target identifier** (`Delete cluster prod-eu-01?`) and the exact blast radius (`Revokes 4 tokens and stops 12 cron schedules immediately`)."
+      ],
+      "states": [
+        "**Focus safety:** Focus `Cancel` (or a neutral input) on dialog open—never pre-focus the red `Delete` confirm button; restore focus to the trigger control on Escape/Cancel.",
+        "**High-risk friction:** For production resources, require typing the exact resource slug (`prod-eu-01`) with `autocomplete=\"off\"` inside a visible labeled field before enabling the `danger` confirm button.",
+        "Show an explicit in-flight state (`Deleting...`, disabled close actions) and route cleanly back to the parent index upon completion with a confirmation status line."
+      ],
+      "include": [
+        "Specific verb on the destructive button (`Revoke key`, `Delete workspace`) rather than ambiguous `Confirm` or `Yes` (`a11y.names`).",
+        "`overscroll-behavior: contain` on the modal container so scrolling the dialog never scrolls the backdrop page."
+      ],
+      "refuse": [
+        "Modal confirmation prompts for non-destructive toggles (`\"Are you sure you want to log out?\"`).",
+        "Vague boilerplate warnings (`\"This action cannot be undone. Are you sure?\"`) with no object name or consequence count.",
+        "Placing two identical bright filled buttons side by side without separating safe dismissal (`chrome.two-primaries`)."
+      ],
+      "litmus": [
+        "Triggering a deletion with Enter or accidental Spacebar cannot destroy a production record, and `Cancel` returns focus exactly to where the user pressed Delete."
+      ]
+    },
+    {
+      "id": "onboarding-checklist",
+      "title": "Progressive Activation Onboarding Flow",
+      "type": "flow",
+      "directions": [
+        "precise-technical",
+        "quiet-luxury"
+      ],
+      "job": "reach first meaningful product value in under three steps",
+      "tags": [
+        "onboarding",
+        "activation",
+        "progress",
+        "wizard",
+        "skip"
+      ],
+      "summary": "Defer configuration the product does not need yet and guide the user straight to their first working artifact.",
+      "layout": [
+        "Present one primary decision per step (`1 of 3` numeric progress in tabular type) inside a focused container, avoiding heavy multi-column marketing sidebars.",
+        "Anchor the step heading cleanly left-aligned with a visible **`Skip for now`** or **`Configure later`** text escape hatch at consistent placement.",
+        "Move completed workspace setup to a non-blocking dismissible checklist inside the real product canvas once minimum inputs are collected."
+      ],
+      "states": [
+        "Preserve typed choices across Back/Next step navigation and browser reload (local draft or server step state).",
+        "Disable only invalid submission—or better, validate inline on submit/blur with field-level instructions (`a11y.errors`).",
+        "If requesting team invites or integrations, pre-populate sensible defaults and allow skipping with zero guilt copy (`\"I'll do this later\"` rather than `\"No thanks, I hate shipping faster\"`)."
+      ],
+      "include": [
+        "Concrete preview of what the choices configure (e.g., showing the live CLI command or webhook URL updating as the user picks region/framework).",
+        "Immediate working state upon finish—land on the populated workspace, not a confetti blocker."
+      ],
+      "refuse": [
+        "Five-page interrogation forms demanding job title, company size, and attribution before showing the product.",
+        "Fake loading screens (`\"Tailoring your workspace...\"`) hiding empty sleeps (`motion.purpose`).",
+        "Dark-pattern dismiss copy."
+      ],
+      "litmus": [
+        "A user can reach an operational screen in two clicks or fewer, navigate backward without losing form state, and dismiss setup cleanly."
+      ]
+    },
+    {
+      "id": "settings-form",
+      "title": "Ruled Configuration & Workspace Settings",
+      "type": "screen",
+      "directions": [
+        "precise-technical",
+        "editorial-print"
+      ],
+      "job": "configure account or workspace preferences without lost edits",
+      "tags": [
+        "settings",
+        "form",
+        "validation",
+        "save-bar",
+        "hairlines"
+      ],
+      "summary": "Organize long configuration surfaces with clear typographic sections, 1px horizontal hairlines, persistent field labels, and unambiguous save feedback.",
+      "layout": [
+        "Cap form field measure around `42ch–56ch` even on wide displays (`spacing.measure`); use a two-column split (`section title + 1-line summary` on the left `~240px`, controls stacked on the right) separated by `1px` hairlines instead of boxing every setting in a drop-shadowed card (`material.hairline-before-box`).",
+        "Always place visible `<label for=\"...\">` directly above each input; put helper descriptions beneath the input (wired with `aria-describedby`), never solely inside placeholder text (`a11y.placeholder-label`).",
+        "Isolate irreversible danger settings (`Transfer ownership`, `Delete workspace`) in a clearly separated final hairline block at the bottom."
+      ],
+      "states": [
+        "Dirty-state clarity: when per-section saving exists, keep `Save changes` clear per group; for full-page forms, show an explicit inline or sticky unsaved bar (`Unsaved changes` + `Discard` link + `Save settings` primary button) only when dirty.",
+        "Never block paste (`onPaste` preventDefault), set `autocomplete` attributes (`email`, `organization`, `url`), and set `inputmode=\"numeric\"` for ports/billing IDs.",
+        "Validate cleanly at each field on blur/submit with `aria-invalid=\"true\"` and concrete fix instructions (`\"Must be a valid HTTPS origin without trailing slash\"`)."
+      ],
+      "include": [
+        "Unambiguous read-only values formatted in tabular monospace with explicit 1-click Copy confirmation (`Workspace ID`, `Webhook Secret`) announcing `\"Copied\"` politely.",
+        "Exact role/permission warning when a field is locked by org admin (`Read-only: managed by Okta SAML`)."
+      ],
+      "refuse": [
+        "Stacking five identical shadow-bordered cards down the settings route (`material.gray-card-shadow`).",
+        "Silent autosave with no status indicator alongside explicit Save buttons (mixing both models creates ambiguity).",
+        "Using green/accent toggle switches without state text when context needs explicit On/Off guarantees."
+      ],
+      "litmus": [
+        "Every input has an always-visible label and `2px` `:focus-visible` ring, Tab navigates strictly in visual section order, and invalid edits pinpoint the exact field without erasing neighboring inputs."
+      ]
+    },
+    {
+      "id": "billing-cancellation",
+      "title": "Honest Subscription Cancel & Pause Flow",
+      "type": "flow",
+      "directions": [
+        "precise-technical",
+        "quiet-luxury"
+      ],
+      "job": "cancel, downgrade, or pause billing without deceptive hurdles",
+      "tags": [
+        "billing",
+        "cancel",
+        "retention",
+        "downgrade",
+        "transparency"
+      ],
+      "summary": "Respect the customer's decision cleanly so churned teams leave trusting the product rather than filing chargebacks.",
+      "layout": [
+        "Place `Cancel subscription` visibly inside Plan/Billing settings at normal readable weight and contrast—never hidden in tiny low-contrast grey links or multi-nested accordions.",
+        "Show one calm summary block stating exactly what the user currently pays (`Team Plan · $49/mo · renews Nov 28, 2026`), what remains usable until period end, and what happens to stored data after cancellation."
+      ],
+      "states": [
+        "If offering an alternative (Pause for 1–3 months, Downgrade to Free, or optional single-choice exit survey), present those as **parallel optional adjustments above one unambiguous final `Cancel at period end` action**—never trap behind mandatory free-text essays or deceptive button swaps.",
+        "Immediately email/display the exact cancellation confirmation timestamp and final access date (`\"Active until Nov 28, 2026 — $0 scheduled\"`), plus a single quiet `Resume subscription` link in billing until that date."
+      ],
+      "include": [
+        "Exact dollar amount stopped (`\"$49/mo stops after Nov 28\"`), seat/data export link (`Export JSON archive before expiry`), and clear refund/proration policy link if applicable."
+      ],
+      "refuse": [
+        "Shaming opt-out copy (`\"No, I prefer wasting hours\"`).",
+        "Swapping button colors mid-flow so the primary bright fill keeps the subscription while the mute grey text cancels.",
+        "Multi-step retention gauntlets (`5+` screens) or `\"Call sales to cancel online plan\"`."
+      ],
+      "litmus": [
+        "Starting from Billing Settings, a subscriber can confirm termination in at most 2 intentional clicks, read the exact end date in grayscale, and export their data before leaving."
+      ]
+    },
+    {
+      "id": "command-palette",
+      "title": "Keyboard Command Palette & Quick Jump",
+      "type": "screen",
+      "directions": [
+        "precise-technical",
+        "cinematic-dark"
+      ],
+      "job": "jump directly to records, routes, or actions from the keyboard",
+      "tags": [
+        "command",
+        "search",
+        "keyboard",
+        "shortcuts",
+        "overlay"
+      ],
+      "summary": "Serve power users sub-second navigation and action dispatch with zero pointer travel.",
+      "layout": [
+        "Present one centered modal overlay (`surface-raised` with a single `1px` hairline or border and one tight overlay shadow, zero outer gradient glow).",
+        "Open straight onto an auto-focused borderless/hairline search field (`role=\"combobox\"`, `aria-expanded=\"true\"`, `aria-controls`), immediately showing grouped recent items or primary commands before the user finishes typing.",
+        "Align action label on the left and subtle category (`Settings`, `Build`) + crisp `kbd` shortcut caps on the right (`tabular-nums`, `IBM Plex Mono`)."
+      ],
+      "states": [
+        "Bind `Cmd+K` / `Ctrl+K` globally (when not conflicting with explicit text editor chords) and `Esc` to close while returning focus to the triggering element or last focusable control.",
+        "Full Arrow Up/Down cycling (`aria-activedescendant`), Enter to execute, and nested prefix scoping (`>` commands, `/` routes, `#` records) indicated via clear chip/prefix state inside the search bar—not nested popovers.",
+        "Empty query search state must distinguish `\"No commands match 'zqx'\"` and preserve instant clearing with Backspace."
+      ],
+      "include": [
+        "Subtle 1-line keyboard footer (`↑↓ Navigate · ↵ Open · Esc Close`) so shortcuts remain discoverable without cluttering rows.",
+        "Exact match substring emphasis via ink contrast/weight rather than noisy background pills."
+      ],
+      "refuse": [
+        "Making the command palette the *only* navigation when primary app views lack visible semantic links (`a11y.names`, `hierarchy.first-screen`).",
+        "Floating decorative blur over unreadable background contrast (`material.glass-on-flat`).",
+        "Truncating long record paths without preserving trailing file/service names."
+      ],
+      "litmus": [
+        "Opening with `Cmd/Ctrl+K`, typing 3 letters, pressing Down twice, and hitting Enter completes the target jump without touching a mouse, and `Esc` cleanly restores focus."
+      ]
+    },
+    {
+      "id": "auth-sign-in",
+      "title": "Focused Sign-In & Verification Gate",
+      "type": "screen",
+      "directions": [
+        "precise-technical",
+        "quiet-luxury"
+      ],
+      "job": "authenticate quickly with clear autofill and recovery paths",
+      "tags": [
+        "auth",
+        "login",
+        "passkey",
+        "form",
+        "autofill"
+      ],
+      "summary": "Remove marketing distractions and let a returning or new member sign in cleanly via password manager, passkey, or SSO without losing input state.",
+      "layout": [
+        "Center the single clean column (`max-width: 380px–420px`) or use a crisp asymmetric 2-column frame where the right/left side carries real product context or stays honest paper (`hierarchy.center-is-ceremonial` allows one focused gate).",
+        "Lead directly with workspace/app wordmark, task title (`Sign in to Meridian`), primary form controls, and zero promotional feature carousels.",
+        "Separate federation buttons (`Continue with GitHub`, `Sign in with SSO`) cleanly from the email form with a labeled horizontal hairline rule (`or`)."
+      ],
+      "states": [
+        "Set strict semantic `type=\"email\"`, `autocomplete=\"username\"` / `\"current-password\"` / `\"one-time-code\"`, and `inputmode=\"numeric\"` on 6-digit codes so OS autofill and password managers work smoothly.",
+        "Provide an accessible `Show` / `Hide` password toggle (`aria-pressed`, native button) and a visible `Forgot password?` link next to the Password `<label>`, never hiding it beneath submit errors.",
+        "Show field-level inline errors (`\"Check email format: missing @\"`) preserving the typed email value on submission failure.",
+        "Support paste on OTP fields across all inputs (`onPaste` fills slots rather than blocking)."
+      ],
+      "include": [
+        "Unambiguous workspace context if authenticating to a specific tenant (`Signing in to acme-prod`).",
+        "Explicit MFA fallback recovery wording when a device key is unavailable."
+      ],
+      "refuse": [
+        "Splitting sign-in behind five bright identical social buttons (`chrome.two-primaries`).",
+        "Disabling paste (`onPaste` preventDefault) on email, password, or OTP inputs.",
+        "Placeholder-only input labels (`a11y.placeholder-label`)."
+      ],
+      "litmus": [
+        "Password managers autofill email + password seamlessly, keyboard Tab steps from Email -> Forgot link -> Password -> Show toggle -> Submit cleanly in visual order, and an invalid attempt keeps the email populated with a clear fix."
+      ]
+    },
+    {
+      "id": "object-detail-spread",
+      "title": "Physical Object Spread & Specification Plate",
+      "type": "screen",
+      "directions": [
+        "quiet-luxury",
+        "precise-technical"
+      ],
+      "job": "examine materials, dimensions, price, and reserve or buy one object",
+      "tags": [
+        "commerce",
+        "product",
+        "object",
+        "spread",
+        "dimensions"
+      ],
+      "summary": "Treat one physical item as a studio spread or specification plate so material facts, proportions, stock state, and the purchase action stay immediately legible.",
+      "layout": [
+        "Anchor the first viewport with a 2-column spread: generous studio photograph or orthographic view on the left (`aspect-ratio` preserved, sharp corners or subtle 2px seam, zero decorative overlay pills), and one start-aligned factual column (`~36ch–48ch`) on the right.",
+        "Inside the right column, stack: one quiet category/material kicker (optional), object title at regular display weight, concrete price (`tabular-nums`), one grounded paragraph naming clay/fabric/alloy and provenance, and **one** clear primary action (`Add to bag ($68)` or `Reserve from firing`).",
+        "Below the action, present hard physical specifications (`Dimensions`, `Weight`, `Material`, `Batch / Dispatch window`) as a hairline-ruled `<dl>` definition list rather than floating pill cards (`material.hairline-before-box`)."
+      ],
+      "states": [
+        "Variant selection (Finish, Size, Edition) uses a crisp segmented control or hairline swatch list updating price, lead time, and image frame immediately without full-page jumps.",
+        "Sold-out / waitlist state states the exact status as words (`Sold out · Next firing Dec 4`) in muted or oxide text (`a11y.not-color-alone`), replacing/disabling the primary action with a single clean notification field when needed.",
+        "On narrow viewports (`< 768px`), render image first at full readable framing followed cleanly by the title and action within the first fold."
+      ],
+      "include": [
+        "Explicit dimensions, materials, shipping window, and return policy right in plain typography—never buried inside nested tabs or accordion traps.",
+        "Explicit `width` / `height` on product photography (`a11y.semantics`) and high-contrast zoom view if inspecting fine grain or ports."
+      ],
+      "refuse": [
+        "Three-column \"Free shipping / 30-day warranty / Secure checkout\" icon tiles stacked below the hero (`material.icon-tile`).",
+        "Countdown scarcity timers, `\"14 people viewing now\"` fake proof (`content.fake-proof`), or badge piles (`chrome.badge-pile`).",
+        "Warm cream + serif applied as an empty costume without real product photography (`material.fake-media`)."
+      ],
+      "litmus": [
+        "Covering nav chrome leaves the object, its material specifications, its price, and its single acquisition action unmistakable in grayscale."
+      ]
+    },
+    {
+      "id": "editorial-longform",
+      "title": "Single-Column Essay & Dispatch Reading View",
+      "type": "screen",
+      "directions": [
+        "editorial-print"
+      ],
+      "job": "read an argument or report cleanly without modal interruptions",
+      "tags": [
+        "article",
+        "essay",
+        "longform",
+        "serif",
+        "measure"
+      ],
+      "summary": "Respect the reader's sustained attention with a deliberate line measure (`60ch–72ch`), clear structural hierarchy between masthead, standfirst, prose, and quiet captions, and zero pop-up interruptions.",
+      "layout": [
+        "Start with a concise top masthead (`ui` sans, 1px `ink` or `hairline` bottom rule), publication date/category line, display headline (`1.12–1.18` leading), factual dek, byline, and optionally one lead photograph with an attributed caption in smaller sans beneath it.",
+        "Keep running prose in serif at `18px–20px` with `1.5–1.6` line-height, ragged right (never justified on screen), capped strictly at `62ch–70ch` (`spacing.measure`).",
+        "Reserve side-margins (or footnote/figure rail on wide desktop viewports) for figure numbers, citations, or inline clarifications rather than trapping prose in a bordered card."
+      ],
+      "states": [
+        "Footnotes, references, and `#section` anchors set `scroll-margin-top` above any sticky bar (`a11y.semantics`) and highlight target paragraphs gently when jumped to.",
+        "Preserve browser native text selection, Cmd+F, reader mode, and zoom cleanly.",
+        "If displaying related dispatches at the end of the piece, separate with one full-column `1px` rule and factual title + date + reading time list (`hierarchy.alignment`), not rounded card carousels."
+      ],
+      "include": [
+        "Clear distinction between prose (`serif`) and apparatus—captions, dates, credits, footnotes (`sans` / `mono`).",
+        "Specific image/diagram attribution and caption describing *what* the plate shows rather than generic filler (`content.abstract-verbs`)."
+      ],
+      "refuse": [
+        "Newsletter modal gates popping over paragraph 2, sticky floating share sidebars overlapping text, or inline animated gradients.",
+        "Combining oversized drop caps, pull-quote cards, italic highlight boxes, and textured paper overlays on one screen (`uniqueness.one-detail`).",
+        "Reading text below `16px` (`a11y.size`)."
+      ],
+      "litmus": [
+        "Print/gray mode retains effortless reading cadence across a 1,500-word article, every link is distinguishable by underline, and zero banners overlap any sentence on desktop or mobile."
+      ]
+    },
+    {
+      "id": "event-catalog-night",
+      "title": "Night Program & Curated Work Index",
+      "type": "screen",
+      "directions": [
+        "cinematic-dark"
+      ],
+      "job": "browse screenings, releases, or live dates where the work carries color",
+      "tags": [
+        "film",
+        "events",
+        "music",
+        "catalog",
+        "listings"
+      ],
+      "summary": "Build a dark listening/watching/program surface where stills, posters, schedules, and dates sit in crisp monochrome rooms—never dark-mode form templates or glowing bento grids.",
+      "layout": [
+        "Lead either with **one featured work spread** (large sharp-cornered still carrying all the chromatic richness beside title, director/artist credit, runtime/date meta, and one quiet action) OR a **dense night listing** ordered cleanly by date/city (`Resident Advisor` discipline) using thin hairlines and tabular dates.",
+        "Keep dark planes stepped calmly (`#141311` canvas vs `#1e1c19` raised band only where hierarchy demands separation) with warm off-white text (`#f3f0e8`) and subdued warm gray credits (`#9c978e` passing `>= 4.5:1`).",
+        "Place dates, durations, seat counts, or showtimes in a predictable aligned column with `tabular-nums` so scanning tonight vs Friday takes one eye sweep."
+      ],
+      "states": [
+        "Switching day/city/format filter (`All | Tonight | 35mm | Live`) updates the listing immediately in place and syncs URL parameters (`?city=london&filter=tonight`).",
+        "Sold-out or archived screenings stay cleanly readable via explicit word status (`Sold out`, `Waitlist`), using a single muted signal hue (`clay`/`red`) sparingly as text/indicator—not neon glowing badges.",
+        "Audio/trailer preview toggles keep explicit keyboard-focusable Pause/Mute controls cleanly separated from row navigation links."
+      ],
+      "include": [
+        "Hard artistic metadata beside each title: director/label, year, venue, duration, format (`35mm`, `Vinyl`, `Live A/V`).",
+        "Explicit contrast-checked solid scrim or split panel whenever captions sit near dark photography (`a11y.contrast`)."
+      ],
+      "refuse": [
+        "Indigo glows, purple radial blobs (`color.aurora`), rounded glass cards over blurred album art (`material.glass-on-flat`), or `\"Good evening, curator\"` dashboard chrome (`layout.dashboard-costume`).",
+        "Truncating film/artist titles into 1-line ellipsis soup across narrow columns."
+      ],
+      "litmus": [
+        "Turning off imagery/posters leaves cleanly aligned tabular listings in an intentional dark room rather than glowing SaaS placeholders, and white-on-black contrast never flickers with harsh `#000000` inversion halos."
+      ]
+    }
+  ],
   "antiPatterns": [
     {
       "id": "skeleton.saas-landing",
@@ -878,18 +1358,78 @@ window.PREMIUM_TASTE_DATA = {
       ],
       "why": "Keyboard users cannot see where they are. The page also looks broken when it is tabbed, which it will be.",
       "instead": "A 2px offset ring in ink or the accent, designed once."
+    },
+    {
+      "id": "uniqueness.calm-editorial-slop",
+      "signals": [
+        "Warm ivory paper, olive or clay accent, and editorial serif display applied to a generic analytics tool, developer platform, or checkout form.",
+        "Replacing the brand name with a coffee shop or boutique hotel still makes the hero plausible."
+      ],
+      "also_called": "warm beige default for every app",
+      "why": "AI agents reach for warm paper + editorial serif as a lazy shortcut for \"good taste\", detaching styling from the actual product job.",
+      "instead": "Pass the Editorial Test. Match precise-technical density and direct product proof when the buyer came to operate a tool or evaluate metrics."
+    },
+    {
+      "id": "type.hairline-body",
+      "signals": [
+        "Font weight 100 or 200 on running copy, metadata, or links below 18px copied literally from an automated style dump."
+      ],
+      "why": "Subpixel antialiasing turns thin weights into unreadable washed-out strokes on standard LCD displays and fails practical accessibility.",
+      "instead": "Use regular (400) or medium (500) for readable copy and navigation while keeping display restraint on large headings only."
+    },
+    {
+      "id": "type.caps-untracked",
+      "signals": [
+        "Uppercase labels or buttons set at default letter-spacing (0em) or long sentences forced into all caps."
+      ],
+      "why": "Untracked uppercase letters collide optically and degrade scanning speed.",
+      "instead": "Add +0.05em to +0.08em letter-spacing on at most one short kicker, or set labels in sentence case."
+    },
+    {
+      "id": "material.fake-media",
+      "signals": [
+        "Empty CSS blurred gradients, hand-coded decorative wave divs, or fake wireframe rectangles occupying a reference slot meant for photography or real UI proof."
+      ],
+      "why": "Weak CSS approximations call attention to missing product substance instead of supporting the subject.",
+      "instead": "Supply genuine photography, real product screenshots, accurate SVG schematics, or clearly specified art-directed media slots."
+    },
+    {
+      "id": "a11y.div-button",
+      "signals": [
+        "Interactive triggers implemented as `<div onClick>` or `<span onClick>`, viewport disabling user zoom, or sticky bars obscuring `#anchor` targets."
+      ],
+      "why": "Breaks keyboard activation, screen-reader role announcements, middle-click navigation, and accessible zooming.",
+      "instead": "Use semantic `<button type=\"button\">` or `<a href>`, keep zoom enabled, and set `scroll-margin-top` on anchored headings."
     }
   ],
   "tokens": {
     "quiet-luxury": {
       "name": "Warm Paper",
+      "direction": "quiet-luxury",
       "file": "tokens/quiet-luxury.DESIGN.md",
+      "scale": {
+        "name": "Minor Third",
+        "ratio": "1.2",
+        "base": "16px"
+      },
+      "opentype": {
+        "numeric": "tabular-nums",
+        "features": "\"kern\" 1, \"liga\" 1"
+      },
+      "surfaces": {
+        "step-0-canvas": "#f3efe6",
+        "step-1-raised": "#f7f4ee",
+        "step-2-subtle": "#eae4d8",
+        "step-3-inverted": "#1c1915"
+      },
       "colors": {
         "surface": "#f3efe6",
         "surface-raised": "#f7f4ee",
+        "surface-subtle": "#eae4d8",
         "ink": "#1c1915",
         "ink-muted": "#5c564c",
         "hairline": "#ddd4c6",
+        "line": "#8d8476",
         "accent": "#7a3e2e",
         "on-accent": "#f6f1e8",
         "danger": "#8d2f2f"
@@ -906,19 +1446,22 @@ window.PREMIUM_TASTE_DATA = {
           "fontFamily": "Newsreader, Iowan Old Style, Palatino, Georgia, serif",
           "fontSize": "28px",
           "fontWeight": "400",
-          "lineHeight": "1.2"
+          "lineHeight": "1.2",
+          "letterSpacing": "-0.01em"
         },
         "body": {
           "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "16px",
           "fontWeight": "400",
-          "lineHeight": "1.55"
+          "lineHeight": "1.55",
+          "letterSpacing": "0em"
         },
         "ui": {
           "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "14px",
           "fontWeight": "400",
-          "lineHeight": "1.4"
+          "lineHeight": "1.4",
+          "letterSpacing": "0em"
         },
         "kicker": {
           "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
@@ -931,7 +1474,8 @@ window.PREMIUM_TASTE_DATA = {
           "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "13px",
           "fontWeight": "400",
-          "lineHeight": "1.4"
+          "lineHeight": "1.4",
+          "letterSpacing": "0em"
         }
       },
       "rounded": {
@@ -948,21 +1492,70 @@ window.PREMIUM_TASTE_DATA = {
       },
       "surfaceRows": [
         {
-          "role": "surface",
-          "hex": "#f3efe6"
+          "step": "0",
+          "token": "surface",
+          "hex": "#f3efe6",
+          "purpose": "Primary warm paper canvas across sections"
         },
         {
-          "role": "surface-raised",
-          "hex": "#f7f4ee"
+          "step": "1",
+          "token": "surface-raised",
+          "hex": "#f7f4ee",
+          "purpose": "Dialogs, menus, and hovered swatch panels only"
+        },
+        {
+          "step": "2",
+          "token": "surface-subtle",
+          "hex": "#eae4d8",
+          "purpose": "Image mattes and quiet recessed bands"
+        },
+        {
+          "step": "3",
+          "token": "ink",
+          "hex": "#1c1915",
+          "purpose": "Inverted primary button fill and high-contrast footer bands"
         }
+      ],
+      "dosDonts": [
+        "Do let the photograph or the object be the warmest thing on the page.",
+        "Do keep headlines at regular weight (`400`) and tabular numerals aligned on prices/dimensions.",
+        "Do leave a wide margin rather than stretch the paragraph.",
+        "Don't put `accent` (`#7a3e2e`) on every link, icon, and secondary badge.",
+        "Don't apply warm cream + Newsreader to a dense SaaS log or analytics table (`uniqueness.calm-editorial-slop`).",
+        "Don't add a shadow stack, a gradient mesh, or a second display family.",
+        "Don't set body text below 14px.",
+        "Don't center the column under a centered headline with two buttons."
+      ],
+      "agentPrompts": [
+        "Build the primary spread on `#f3efe6`: 1120px max-width, 64px gap between a sharp-cornered (`0px` radius) object still on `#eae4d8` and a 42ch right column with a left-aligned Newsreader 40px weight 400 heading, 16px Public Sans body, `1px` `#ddd4c6` hairline spec rows (`tabular-nums`), and one square `44px` tall `#1c1915` primary button (`#f3efe6` text).",
+        "Build a hairline header bar: `56px` height on `#f3efe6`, bottom border `1px solid #ddd4c6`, left wordmark in Newsreader 18px, right text links in Public Sans 14px `#5c564c` (`24px` gap), active link in `#1c1915` with `1px` underline—no search pills or colored buttons.",
+        "Build a square reservation form field: visible 14px label `#1c1915` positioned `8px` above a `44px` input (`#f7f4ee` fill, `1px solid #8d8476` border, `0px` radius), with inline helper text in `13px #5c564c` and `2px` offset `#1c1915` `:focus-visible` outline.",
+        "Build a firing availability note: flat layout with no card box, `Sold out · Next firing Dec 4` set inline in `14px #7a3e2e` above a single underlined text trigger `Join firing waitlist`."
       ]
     },
     "cinematic-dark": {
       "name": "Night Room",
+      "direction": "cinematic-dark",
       "file": "tokens/cinematic-dark.DESIGN.md",
+      "scale": {
+        "name": "Minor Third",
+        "ratio": "1.2",
+        "base": "16px"
+      },
+      "opentype": {
+        "numeric": "tabular-nums",
+        "features": "\"kern\" 1, \"liga\" 1"
+      },
+      "surfaces": {
+        "step-0-canvas": "#141311",
+        "step-1-raised": "#1e1c19",
+        "step-2-subtle": "#262420",
+        "step-3-inverted": "#f3f0e8"
+      },
       "colors": {
         "surface": "#141311",
         "surface-raised": "#1e1c19",
+        "surface-subtle": "#262420",
         "ink": "#f3f0e8",
         "ink-muted": "#9c978e",
         "hairline": "#2a2825",
@@ -976,37 +1569,43 @@ window.PREMIUM_TASTE_DATA = {
           "fontFamily": "Schibsted Grotesk, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "40px",
           "fontWeight": "400",
-          "lineHeight": "1.1"
+          "lineHeight": "1.1",
+          "letterSpacing": "-0.02em"
         },
         "title": {
           "fontFamily": "Schibsted Grotesk, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "24px",
           "fontWeight": "500",
-          "lineHeight": "1.2"
+          "lineHeight": "1.2",
+          "letterSpacing": "-0.015em"
         },
         "body": {
           "fontFamily": "Schibsted Grotesk, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "16px",
           "fontWeight": "400",
-          "lineHeight": "1.5"
+          "lineHeight": "1.5",
+          "letterSpacing": "0em"
         },
         "ui": {
           "fontFamily": "Schibsted Grotesk, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "14px",
           "fontWeight": "400",
-          "lineHeight": "1.4"
+          "lineHeight": "1.4",
+          "letterSpacing": "0em"
         },
         "meta": {
           "fontFamily": "Schibsted Grotesk, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "13px",
           "fontWeight": "400",
-          "lineHeight": "1.4"
+          "lineHeight": "1.4",
+          "letterSpacing": "0em"
         },
         "credit": {
           "fontFamily": "Source Serif 4, Iowan Old Style, Palatino, Georgia, serif",
           "fontSize": "15px",
           "fontWeight": "400",
           "lineHeight": "1.4",
+          "letterSpacing": "0em",
           "fontStyle": "italic"
         }
       },
@@ -1023,24 +1622,73 @@ window.PREMIUM_TASTE_DATA = {
       },
       "surfaceRows": [
         {
-          "role": "surface",
-          "hex": "#141311"
+          "step": "0",
+          "token": "surface",
+          "hex": "#141311",
+          "purpose": "Warm theater ground; absorbs background chrome"
         },
         {
-          "role": "surface-raised",
-          "hex": "#1e1c19"
+          "step": "1",
+          "token": "surface-raised",
+          "hex": "#1e1c19",
+          "purpose": "Transport bar, popover, or caption sidecar"
+        },
+        {
+          "step": "2",
+          "token": "surface-subtle",
+          "hex": "#262420",
+          "purpose": "Highlighted row or hover plane on dense screening lists"
+        },
+        {
+          "step": "3",
+          "token": "ink",
+          "hex": "#f3f0e8",
+          "purpose": "Off-white primary text and solid `0px` action fill"
         }
+      ],
+      "dosDonts": [
+        "Do let the still, sleeve, or poster be the colored thing in the room.",
+        "Do keep the room empty of chrome when the work is removed. A dashboard with the lights off fails this test.",
+        "Do align listing dates and durations using `tabular-nums`.",
+        "Don't put `accent` (`#c9846a`) on the button, all links, and icons.",
+        "Don't add purple/indigo glow, gradient meshes, gold rules, or a blurred backdrop enlargement of the art.",
+        "Don't invert a light SaaS form into `#141311` and call it cinematic.",
+        "Don't set body text below 14px."
+      ],
+      "agentPrompts": [
+        "Build a cinema feature spread on `#141311`: full-bleed or large sharp (`0px`) 16:9 film still alongside a `360px` column displaying a single live clay label (`#c9846a`, `13px`), a `40px` weight 400 Schibsted Grotesk title (`#f3f0e8`, `-0.02em`), Source Serif 4 italic credit (`15px`, `#9c978e`), 2-sentence synopsis, and one `44px` square `#f3f0e8` button (`#141311` text).",
+        "Build a dense night screening schedule row: flat `#141311` rows separated by `1px solid #2a2825`, hover state `#262420` with zero shadow/lift, 4-column grid (`19:30` in `tabular-nums`, title `#f3f0e8`, venue `#9c978e`, status `Tickets` or `Sold out`), `44px` minimum row height.",
+        "Build a minimal night audio transport bar (`#1e1c19` fill, top rule `1px solid #746e66`): track title + italic artist credit on the left, `02:14 / 04:50` (`tabular-nums`) centered, single square `Pause` button and underlined `Tracklist` toggle on the right.",
+        "Build a top dark masthead: `56px` height on `#141311`, `1px solid #2a2825` bottom seam, left lowercase wordmark (`#f3f0e8`), 3 plain navigation links (`14px`, `#9c978e` hovering to `#f3f0e8`), zero search pills or notification badges."
       ]
     },
     "precise-technical": {
       "name": "Instrument",
+      "direction": "precise-technical",
       "file": "tokens/precise-technical.DESIGN.md",
+      "scale": {
+        "name": "Major Second",
+        "ratio": "1.125",
+        "base": "14px"
+      },
+      "opentype": {
+        "numeric": "tabular-nums",
+        "features": "\"tnum\" 1, \"cv01\" 1, \"zero\" 1"
+      },
+      "surfaces": {
+        "step-0-canvas": "#f5f5f2",
+        "step-1-raised": "#ffffff",
+        "step-2-subtle": "#ecece6",
+        "step-3-inverted": "#1b1d1c"
+      },
       "colors": {
         "surface": "#f5f5f2",
         "surface-raised": "#ffffff",
+        "surface-subtle": "#ecece6",
         "ink": "#1b1d1c",
         "ink-muted": "#4e5450",
         "hairline": "#e2e3dc",
+        "line": "#c4c6bd",
         "accent": "#1e5c40",
         "on-accent": "#f3f6f4",
         "danger": "#8f2d1f",
@@ -1051,25 +1699,29 @@ window.PREMIUM_TASTE_DATA = {
           "fontFamily": "IBM Plex Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "20px",
           "fontWeight": "500",
-          "lineHeight": "1.3"
+          "lineHeight": "1.3",
+          "letterSpacing": "-0.015em"
         },
         "body": {
           "fontFamily": "IBM Plex Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "14px",
           "fontWeight": "400",
-          "lineHeight": "1.45"
+          "lineHeight": "1.45",
+          "letterSpacing": "0em"
         },
         "label": {
           "fontFamily": "IBM Plex Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "12px",
           "fontWeight": "500",
-          "lineHeight": "1.3"
+          "lineHeight": "1.3",
+          "letterSpacing": "0.01em"
         },
         "mono": {
           "fontFamily": "IBM Plex Mono, ui-monospace, SF Mono, Menlo, Consolas, monospace",
           "fontSize": "13px",
           "fontWeight": "400",
-          "lineHeight": "1.4"
+          "lineHeight": "1.4",
+          "letterSpacing": "0em"
         }
       },
       "rounded": {
@@ -1086,26 +1738,75 @@ window.PREMIUM_TASTE_DATA = {
       },
       "surfaceRows": [
         {
-          "role": "surface",
-          "hex": "#f5f5f2"
+          "step": "0",
+          "token": "surface",
+          "hex": "#f5f5f2",
+          "purpose": "Cool gray-paper outer shell and navigation chrome"
         },
         {
-          "role": "surface-raised",
-          "hex": "#ffffff"
+          "step": "1",
+          "token": "surface-raised",
+          "hex": "#ffffff",
+          "purpose": "Data tables, form controls, menus, and active code panes"
+        },
+        {
+          "step": "2",
+          "token": "surface-subtle",
+          "hex": "#ecece6",
+          "purpose": "Segmented toggle tracks, column headers, and row hover states"
+        },
+        {
+          "step": "3",
+          "token": "ink",
+          "hex": "#1b1d1c",
+          "purpose": "Primary ink, high-emphasis control fills, and dark console panels"
         }
+      ],
+      "dosDonts": [
+        "Do start on the repeating object (`Revisions`, `Deploys`, `Endpoints`) within the first viewport.",
+        "Do say `Failed`, `Building`, `Shipped` in legible contrast (`#8f2d1f`, `#8a5a12`, `#1e5c40`), never color-only dots.",
+        "Do enforce `tabular-nums` on every numeric/metric column.",
+        "Don't add a left sidebar + greeting + four summary KPI cards above a table that already shows those facts (`layout.dashboard-costume`).",
+        "Don't wrap each list row in a shadowed rounded box (`material.gray-card-shadow`).",
+        "Don't inject purple accents, gradient headings, or Inter/Geist defaults.",
+        "Don't invert these light hex values mechanically for a dark mode—redesign stepped dark surfaces instead."
+      ],
+      "agentPrompts": [
+        "Build an operational filterable table inside `#ffffff` bordered by `1px solid #e2e3dc`: header row in `12px` weight 500 `#4e5450`, fixed `44px` rows (`IBM Plex Sans` `14px` text + `IBM Plex Mono` `13px` SHA/latency columns with `tabular-nums`), status word (`Failed` `#8f2d1f`, `Shipped` `#1e5c40`), zero card shadows.",
+        "Build an inline filter toolbar: `32px` height search input (`#ffffff`, `1px solid #c4c6bd`, `4px` radius, explicit `<label>` beside it), segmented filter buttons inside `#ecece6` track, and one `32px` `#1b1d1c` primary trigger (`New deploy`) on the right.",
+        "Build an inspection console strip: `#1b1d1c` background, `4px` radius, header bar displaying command label in `#a6aca7`, `13px IBM Plex Mono` payload text in `#edf0ec`, and a crisp `1px solid #4e5450` Copy button.",
+        "Build a documentation 3-zone grid: `240px` left nav on `#f5f5f2`, flexible center prose column capped at `68ch` on `#ffffff` (`16px` body, `1.5` leading), `200px` sticky section ToC on the right with `1px solid #e2e3dc` active indicator line."
       ]
     },
     "editorial-print": {
       "name": "Column",
+      "direction": "editorial-print",
       "file": "tokens/editorial-print.DESIGN.md",
+      "scale": {
+        "name": "Major Third",
+        "ratio": "1.25",
+        "base": "18px"
+      },
+      "opentype": {
+        "numeric": "oldstyle-nums proportional-nums",
+        "features": "\"kern\" 1, \"liga\" 1, \"onum\" 1"
+      },
+      "surfaces": {
+        "step-0-canvas": "#f6f1e8",
+        "step-1-raised": "#fbf7f1",
+        "step-2-subtle": "#ece4d6",
+        "step-3-inverted": "#1c1917"
+      },
       "colors": {
         "surface": "#f6f1e8",
         "surface-raised": "#fbf7f1",
+        "surface-subtle": "#ece4d6",
         "ink": "#1c1917",
         "ink-muted": "#4e4944",
         "hairline": "#d8d0c4",
         "line": "#8a8176",
         "accent": "#1c1917",
+        "on-accent": "#f6f1e8",
         "danger": "#8d2f2f"
       },
       "typography": {
@@ -1113,31 +1814,36 @@ window.PREMIUM_TASTE_DATA = {
           "fontFamily": "Source Serif 4, Iowan Old Style, Palatino, Georgia, serif",
           "fontSize": "44px",
           "fontWeight": "500",
-          "lineHeight": "1.15"
+          "lineHeight": "1.15",
+          "letterSpacing": "-0.015em"
         },
         "title": {
           "fontFamily": "Source Serif 4, Iowan Old Style, Palatino, Georgia, serif",
           "fontSize": "28px",
           "fontWeight": "500",
-          "lineHeight": "1.25"
+          "lineHeight": "1.25",
+          "letterSpacing": "-0.01em"
         },
         "body": {
           "fontFamily": "Source Serif 4, Iowan Old Style, Palatino, Georgia, serif",
           "fontSize": "18px",
           "fontWeight": "400",
-          "lineHeight": "1.55"
+          "lineHeight": "1.55",
+          "letterSpacing": "0em"
         },
         "ui": {
           "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "14px",
           "fontWeight": "400",
-          "lineHeight": "1.4"
+          "lineHeight": "1.4",
+          "letterSpacing": "0em"
         },
         "caption": {
           "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
           "fontSize": "14px",
           "fontWeight": "400",
-          "lineHeight": "1.4"
+          "lineHeight": "1.4",
+          "letterSpacing": "0em"
         },
         "kicker": {
           "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
@@ -1160,13 +1866,44 @@ window.PREMIUM_TASTE_DATA = {
       },
       "surfaceRows": [
         {
-          "role": "surface",
-          "hex": "#f6f1e8"
+          "step": "0",
+          "token": "surface",
+          "hex": "#f6f1e8",
+          "purpose": "Primary editorial paper sheet across masthead and columns"
         },
         {
-          "role": "surface-raised",
-          "hex": "#fbf7f1"
+          "step": "1",
+          "token": "surface-raised",
+          "hex": "#fbf7f1",
+          "purpose": "Margin notes, popovers, and dropdown menus only"
+        },
+        {
+          "step": "2",
+          "token": "surface-subtle",
+          "hex": "#ece4d6",
+          "purpose": "Recessed index strips or archival table header bands"
+        },
+        {
+          "step": "3",
+          "token": "ink",
+          "hex": "#1c1917",
+          "purpose": "Story rules, masthead ink, and primary CTA fill (`#f6f1e8` ink)"
         }
+      ],
+      "dosDonts": [
+        "Do keep one sheet color (`#f6f1e8`) for the whole page.",
+        "Do set prose in Source Serif 4 and apparatus in Public Sans.",
+        "Do leave the right prose edge ragged (`text-align: start`).",
+        "Do use a `1px` `#1c1917` rule where a card border would have been.",
+        "Don't pass the Editorial Test fail state (`uniqueness.calm-editorial-slop`): never dress an operational app or SaaS landing in editorial parchment without editorial substance.",
+        "Don't justify the column or set body text below 16px (`18px` standard).",
+        "Don't combine a drop cap, a pull quote card, a huge headline, and textured noise together."
+      ],
+      "agentPrompts": [
+        "Build an essay opener on `#f6f1e8`: single hairline masthead (`52px`, `1px solid #1c1917` bottom border), centered or left-aligned `65ch` column opening with one `13px Public Sans` kicker (`+0.06em`), a `44px Source Serif 4` weight 500 headline, standfirst paragraph (`20px`), and author/date line in `#4e4944`.",
+        "Build a full-width documentary figure block inside the column: sharp `0px` image with declared dimensions, `8px` spacing to a `14px Public Sans` caption (`#4e4944`) and trailing italic photographer credit, closed by a `1px solid #d8d0c4` hairline.",
+        "Build a typographic pull quote: `28px Source Serif 4` italic quote in `#1c1917`, `24px` vertical padding, `1px solid #1c1917` border-top and border-bottom, zero background fill or side bar.",
+        "Build a dispatch archive list below a `1px solid #1c1917` divider: `1px solid #d8d0c4` rows pairing right-aligned `tabular-nums` date (`14px Public Sans #4e4944`), story headline (`20px Source Serif 4`), and section tag—zero card boxes."
       ]
     }
   }

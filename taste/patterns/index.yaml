@@ -1,0 +1,98 @@
+version: 1
+count: 12
+patterns:
+  - id: pricing-table
+    file: pricing-table.md
+    title: SaaS Pricing & Tier Comparison
+    type: screen
+    directions: [precise-technical, quiet-luxury]
+    job: compare plans and pick the right billing tier
+    tags: [pricing, billing, comparison, toggle, conversion]
+
+  - id: empty-state
+    file: empty-state.md
+    title: First-Run & Zero-Data Empty State
+    type: screen
+    directions: [precise-technical, quiet-luxury, cinematic-dark]
+    job: understand why this list is empty and create the first real record
+    tags: [empty, zero-state, onboarding, first-run]
+
+  - id: data-table-filters
+    file: data-table-filters.md
+    title: Searchable Ledger & Filterable Data Table
+    type: screen
+    directions: [precise-technical, editorial-print]
+    job: slice, sort, and inspect dense operational records
+    tags: [table, filters, search, tabular-nums, sorting, url-state]
+
+  - id: destructive-confirmation
+    file: destructive-confirmation.md
+    title: Destructive Action Confirmation & Recovery
+    type: flow
+    directions: [precise-technical, quiet-luxury]
+    job: verify blast radius before irreversible deletion or revocation
+    tags: [delete, confirmation, modal, undo, safety]
+
+  - id: onboarding-checklist
+    file: onboarding-checklist.md
+    title: Progressive Activation Onboarding Flow
+    type: flow
+    directions: [precise-technical, quiet-luxury]
+    job: reach first meaningful product value in under three steps
+    tags: [onboarding, activation, progress, wizard, skip]
+
+  - id: settings-form
+    file: settings-form.md
+    title: Ruled Configuration & Workspace Settings
+    type: screen
+    directions: [precise-technical, editorial-print]
+    job: configure account or workspace preferences without lost edits
+    tags: [settings, form, validation, save-bar, hairlines]
+
+  - id: billing-cancellation
+    file: billing-cancellation.md
+    title: Honest Subscription Cancel & Pause Flow
+    type: flow
+    directions: [precise-technical, quiet-luxury]
+    job: cancel, downgrade, or pause billing without deceptive hurdles
+    tags: [billing, cancel, retention, downgrade, transparency]
+
+  - id: command-palette
+    file: command-palette.md
+    title: Keyboard Command Palette & Quick Jump
+    type: screen
+    directions: [precise-technical, cinematic-dark]
+    job: jump directly to records, routes, or actions from the keyboard
+    tags: [command, search, keyboard, shortcuts, overlay]
+
+  - id: auth-sign-in
+    file: auth-sign-in.md
+    title: Focused Sign-In & Verification Gate
+    type: screen
+    directions: [precise-technical, quiet-luxury]
+    job: authenticate quickly with clear autofill and recovery paths
+    tags: [auth, login, passkey, form, autofill]
+
+  - id: object-detail-spread
+    file: object-detail-spread.md
+    title: Physical Object Spread & Specification Plate
+    type: screen
+    directions: [quiet-luxury, precise-technical]
+    job: examine materials, dimensions, price, and reserve or buy one object
+    tags: [commerce, product, object, spread, dimensions]
+
+  - id: editorial-longform
+    file: editorial-longform.md
+    title: Single-Column Essay & Dispatch Reading View
+    type: screen
+    directions: [editorial-print]
+    job: read an argument or report cleanly without modal interruptions
+    tags: [article, essay, longform, serif, measure]
+
+  - id: event-catalog-night
+    file: event-catalog-night.md
+    title: Night Program & Curated Work Index
+    type: screen
+    directions: [cinematic-dark]
+    job: browse screenings, releases, or live dates where the work carries color
+    tags: [film, events, music, catalog, listings]

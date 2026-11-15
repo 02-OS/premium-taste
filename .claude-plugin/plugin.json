@@ -1,12 +1,20 @@
 {
   "name": "premium-taste",
   "version": "1.1.0",
-  "description": "Premium Taste judgment layer: one direction, one reference, then critique.",
+  "description": "Design judgment layer, 18 brand references, 12 screen/flow patterns, 4 DESIGN.md token packs, and deterministic static/browser UI auditors for coding agents.",
+  "author": {
+    "name": "02-OS",
+    "url": "https://github.com/02-OS"
+  },
+  "repository": "https://github.com/02-OS/premium-taste",
+  "homepage": "https://02-os.github.io/premium-taste/",
+  "license": "MIT",
   "skills": "./skills/",
   "mcpServers": {
     "premium-taste": {
       "command": "python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/mcp_server.py"]
     }
-  }
+  },
+  "keywords": ["design", "ui", "critique", "design-tokens", "accessibility", "audit"]
 }

@@ -6,6 +6,13 @@ Content-Length framing, replying in whichever framing mode the caller sends.
 
 Tools: pick_direction, get_reference, get_pattern, get_tokens, audit_ui, verify_url.
 Resources use premium-taste:// paths. Prompts: critique-ui and choose-direction.
+
+  - pick_direction: Choose 1 direction + best-fit references/patterns + tokens + decision ledger template
+  - get_reference: Fetch full 'what to steal' and 'what not to copy' for a reference
+  - get_pattern: Fetch screen or flow architecture contracts (hierarchy, states, refuse, litmus check)
+  - get_tokens: Export starter tokens as CSS vars, Tailwind v4 @theme, JSON, W3C DTCG JSON, or DESIGN.md
+  - audit_ui: Run the deterministic Premium Taste static auditor on code or a file path
+  - verify_url: Check an http(s) URL with HTTP fallback unless ws_endpoint is set. Does not launch Chromium.
 """
 
 from __future__ import annotations
@@ -20,6 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import audit  # noqa: E402
 import build_site_data as catalog  # noqa: E402
+import critique_url  # noqa: E402
 
 
 DIRECTION_KEYWORDS: dict[str, tuple[str, ...]] = {
@@ -54,15 +62,18 @@ def load_catalog() -> dict:
         catalog.parse_reference(ROOT / "taste" / "references" / f"{ref_id}.md")
         for ref_id in ref_ids
     ]
+    pat_index_text = (ROOT / "taste" / "patterns" / "index.yaml").read_text(encoding="utf-8")
+    pat_ids = re.findall(r"^\s+- id:\s*([a-z0-9-]+)\s*$", pat_index_text, re.M)
+    patterns = [
+        catalog.parse_pattern(ROOT / "taste" / "patterns" / f"{pat_id}.md")
+        for pat_id in pat_ids
+    ]
     tokens = catalog.parse_tokens()
-    patterns = catalog.parse_anti_patterns(
-        (ROOT / "taste" / "anti-patterns.yaml").read_text(encoding="utf-8")
-    )
     return {
         "directions": directions,
         "references": references,
-        "tokens": tokens,
         "patterns": patterns,
+        "tokens": tokens,
     }
 
 
@@ -70,6 +81,31 @@ def _as_text(val: object) -> str:
     if isinstance(val, list):
         return " ".join(str(x) for x in val)
     return str(val or "")
+
+
+def _query_filter(items: list[dict], query: str, fields: tuple[str, ...]) -> list[dict]:
+    """Filter by exact substring first, falling back to multi-word overlap ranking."""
+    q = query.strip().lower()
+    if not q:
+        return items
+    exact = [
+        item
+        for item in items
+        if any(q in _as_text(item.get(f)).lower() for f in fields)
+    ]
+    if exact:
+        return exact
+    words = [w for w in re.findall(r"[a-z0-9-]+", q) if len(w) > 2]
+    if not words:
+        return []
+    scored: list[tuple[int, dict]] = []
+    for item in items:
+        haystack = " ".join(_as_text(item.get(f)).lower() for f in fields)
+        score = sum(1 for w in words if w in haystack)
+        if score > 0:
+            scored.append((score, item))
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return [item for _, item in scored]
 
 
 def score_direction(job: str, direction: dict) -> int:
@@ -119,6 +155,22 @@ def tool_pick_direction(args: dict, data: dict) -> str:
     )
 
     token_pack = data["tokens"].get(chosen["id"], {})
+    dir_patterns = [p for p in data.get("patterns", []) if chosen["id"] in p.get("directions", [])]
+    other_patterns = [p for p in data.get("patterns", []) if chosen["id"] not in p.get("directions", [])]
+
+    def pat_score(pat: dict, boost: int) -> int:
+        hay = " ".join([pat.get("title", ""), pat.get("job", ""), _as_text(pat.get("tags"))]).lower()
+        return boost + sum(3 for w in job_words if len(w) > 3 and w in hay)
+
+    ranked_patterns = sorted(
+        [(pat_score(p, 2), p) for p in dir_patterns] + [(pat_score(p, 0), p) for p in other_patterns],
+        key=lambda pair: pair[0],
+        reverse=True,
+    )
+    top_patterns = [p for _, p in ranked_patterns[:2]]
+    top_ref = dir_refs[0]["id"] if dir_refs else "none"
+    top_pat = top_patterns[0]["id"] if top_patterns else "none"
+
     result = {
         "job": job,
         "recommended_direction": chosen["id"],
@@ -139,6 +191,29 @@ def tool_pick_direction(args: dict, data: dict) -> str:
             }
             for r in dir_refs[:3]
         ],
+        "matching_patterns": [
+            {
+                "id": p["id"],
+                "title": p["title"],
+                "type": p["type"],
+                "job": p["job"],
+                "layout": p["layout"][:2],
+                "litmus": p["litmus"][:1],
+            }
+            for p in top_patterns
+        ],
+        "decision_ledger_template": {
+            "screen_job": job,
+            "direction": chosen["id"],
+            "reference": top_ref,
+            "pattern": top_pat,
+            "one_rule_at_risk": "Name 1 rule or anti-pattern most likely to break if rushed (e.g. type.numbers or chrome.one-primary).",
+            "visual_target_gate": {
+                "rendered_at_target_widths": "1280px and 375px",
+                "first_screen_answer": chosen.get("first_screen"),
+                "anti_averaging_check": "Preserves sharp polarity (temperature, weight discipline, no dark+warm-paper blend).",
+            },
+        },
         "tokens": token_pack,
     }
     return json.dumps(result, indent=2)
@@ -161,18 +236,11 @@ def tool_get_reference(args: dict, data: dict) -> str:
     if direction:
         filtered = [r for r in filtered if r["direction"] == direction]
     if query:
-        filtered = [
-            r
-            for r in filtered
-            if query in r["title"].lower()
-            or query in r["job"].lower()
-            or query in r["summary"].lower()
-            or any(query in t.lower() for t in r["tags"])
-        ]
+        filtered = _query_filter(filtered, query, ("id", "title", "job", "summary", "tags"))
     return json.dumps({"count": len(filtered), "references": filtered}, indent=2)
 
 
-TOKEN_FORMATS = ("css", "tailwind", "json", "design_md")
+TOKEN_FORMATS = ("css", "tailwind", "json", "design_md", "dtcg")
 
 
 def _scale_declarations(pack: dict, prefix: str) -> list[str]:
@@ -187,14 +255,41 @@ def _scale_declarations(pack: dict, prefix: str) -> list[str]:
         if not isinstance(spec, dict):
             continue
         for field, value in spec.items():
-            slug = re.sub(r"[^a-z0-9]+", "-", field.lower()).strip("-")
+            slug = re.sub(r"[^a-z0-9]+", "-", str(field).lower()).strip("-")
             lines.append(f"  {prefix}font-{role}-{slug}: {value};")
     return lines
+
+
+def tool_get_pattern(args: dict, data: dict) -> str:
+    pat_id = str(args.get("id", "")).strip().lower()
+    pat_type = str(args.get("type", "")).strip().lower()
+    direction = str(args.get("direction", "")).strip().lower()
+    query = str(args.get("query", "")).strip().lower()
+    patterns = data.get("patterns", [])
+
+    if pat_id:
+        match = next((p for p in patterns if p["id"] == pat_id), None)
+        if not match:
+            raise ValueError(f"Pattern '{pat_id}' not found. Available: {', '.join(p['id'] for p in patterns)}")
+        raw_md = (ROOT / "taste" / "patterns" / f"{pat_id}.md").read_text(encoding="utf-8")
+        return json.dumps({"pattern": match, "markdown": raw_md}, indent=2)
+
+    filtered = patterns
+    if pat_type:
+        filtered = [p for p in filtered if p.get("type", "").lower() == pat_type]
+    if direction:
+        filtered = [p for p in filtered if direction in p.get("directions", [])]
+    if query:
+        filtered = _query_filter(filtered, query, ("id", "title", "job", "summary", "tags"))
+    return json.dumps({"count": len(filtered), "patterns": filtered}, indent=2)
 
 
 def tool_get_tokens(args: dict, data: dict) -> str:
     direction = str(args.get("direction", "")).strip().lower()
     fmt = str(args.get("format", "css")).strip().lower()
+    verbosity = str(args.get("verbosity", "extended")).strip().lower()
+    if verbosity not in ("compact", "extended"):
+        raise ValueError("Unknown verbosity; choose 'compact' or 'extended'.")
     pack = data["tokens"].get(direction)
     if not pack:
         valid = ", ".join(data["tokens"].keys())
@@ -205,12 +300,17 @@ def tool_get_tokens(args: dict, data: dict) -> str:
         )
 
     if fmt == "design_md":
-        return (ROOT / pack["file"]).read_text(encoding="utf-8")
+        return catalog.render_design_md(direction, pack, verbosity=verbosity)
+    if fmt == "dtcg":
+        return json.dumps(catalog.render_dtcg_tokens(direction, pack), indent=2)
     if fmt == "json":
         return json.dumps(pack, indent=2)
     if fmt == "tailwind":
         lines = [f"/* Premium Taste — {pack['name']} ({direction}) */", "@theme {"]
-        for key, value in (pack.get("colors") or {}).items():
+        colors = pack.get("colors") or {}
+        for key, value in colors.items():
+            lines.append(f"  --color-pt-{key}: {value};")
+        for key, value in (pack.get("surfaces") or {}).items():
             lines.append(f"  --color-pt-{key}: {value};")
         for key, value in (pack.get("spacing") or {}).items():
             lines.append(f"  --pt-space-{key}: {value};")
@@ -226,6 +326,8 @@ def tool_get_tokens(args: dict, data: dict) -> str:
 
     lines = [f"/* Premium Taste — {pack['name']} ({direction}) */", ":root {"]
     lines.extend(_scale_declarations(pack, "--pt-"))
+    for key, value in (pack.get("surfaces") or {}).items():
+        lines.append(f"  --pt-{key}: {value};")
     lines.append("}")
     return "\n".join(lines)
 
@@ -272,29 +374,6 @@ def tool_audit_ui(args: dict, _data: dict) -> str:
     return json.dumps(payload, indent=2)
 
 
-def tool_get_pattern(args: dict, data: dict) -> str:
-    pattern_id = str(args.get("id", "")).strip()
-    query = str(args.get("query", "")).strip().lower()
-    patterns = data["patterns"]
-    if pattern_id:
-        match = next((item for item in patterns if item["id"] == pattern_id), None)
-        if not match:
-            known = ", ".join(item["id"] for item in patterns)
-            raise ValueError(f"Pattern '{pattern_id}' not found. Available: {known}")
-        return json.dumps(match, indent=2)
-    filtered = patterns
-    if query:
-        filtered = [
-            item
-            for item in patterns
-            if query in item["id"]
-            or query in str(item.get("why", "")).lower()
-            or query in str(item.get("instead", "")).lower()
-            or any(query in str(signal).lower() for signal in item.get("signals") or [])
-        ]
-    return json.dumps({"count": len(filtered), "patterns": filtered}, indent=2)
-
-
 def tool_verify_url(args: dict, _data: dict) -> str:
     import critique_url
 
@@ -302,8 +381,10 @@ def tool_verify_url(args: dict, _data: dict) -> str:
     critique_url.assert_http_url(url)
     allow_fonts = {str(f).strip().lower() for f in (args.get("allow_fonts") or []) if str(f).strip()}
     ws_endpoint = str(args.get("ws_endpoint", "")).strip()
+    desktop_w = int(args.get("desktop_width", 1280))
+    mobile_w = int(args.get("mobile_width", 375))
     if ws_endpoint:
-        meta = critique_url.inspect_with_websocket(ws_endpoint, url, 1280, 375)
+        meta = critique_url.inspect_with_websocket(ws_endpoint, url, desktop_w, mobile_w)
         findings = critique_url.dom_metrics_to_findings(url, meta.get("desktop"), meta.get("mobile"), allow_fonts)
     else:
         # HTTP fallback never launches Chromium, so a missing browser cannot hang the server.
@@ -329,6 +410,8 @@ RESOURCE_FILES = (
     "taste/references/index.yaml",
     "AGENTS.md",
     "skills/critique-ui/SKILL.md",
+    "skills/premium-taste/SKILL.md",
+    "taste/patterns/index.yaml",
     "tokens/quiet-luxury.DESIGN.md",
     "tokens/cinematic-dark.DESIGN.md",
     "tokens/precise-technical.DESIGN.md",
@@ -402,7 +485,7 @@ def prompt_text(name: str, arguments: dict) -> str:
 TOOLS = [
     {
         "name": "pick_direction",
-        "description": "Choose the single best Premium Taste direction, fitting reference, first-screen rule, and token palette for a screen job.",
+        "description": "Choose the single best Premium Taste direction, fitting references, matching screen/flow patterns, decision ledger template, and token palette for a screen job.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -424,31 +507,34 @@ TOOLS = [
             "properties": {
                 "id": {"type": "string", "description": "Reference ID (e.g. stripe-docs, aesop, are-na, mubi)."},
                 "direction": {"type": "string", "enum": ["quiet-luxury", "cinematic-dark", "precise-technical", "editorial-print"]},
-                "query": {"type": "string", "description": "Search keyword across job, summary, and tags."},
+                "query": {"type": "string", "description": "Search keywords across job, summary, title, and tags."},
+            },
+        },
+    },
+    {
+        "name": "get_pattern",
+        "description": "Fetch reusable screen or flow architecture contracts (layout hierarchy, required states, what to include/refuse, litmus check).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "id": {"type": "string", "description": "Pattern ID (e.g. pricing-table, empty-state, onboarding-checklist, billing-cancellation)."},
+                "type": {"type": "string", "enum": ["screen", "flow"]},
+                "direction": {"type": "string", "enum": ["quiet-luxury", "cinematic-dark", "precise-technical", "editorial-print"]},
+                "query": {"type": "string", "description": "Search keywords across pattern title, job, summary, and tags."},
             },
         },
     },
     {
         "name": "get_tokens",
-        "description": "Get starter visual tokens for a direction as CSS variables, Tailwind v4 @theme, JSON, or DESIGN.md.",
+        "description": "Get starter visual tokens for a direction as CSS variables, Tailwind v4 @theme, JSON, W3C DTCG JSON, or Compact/Extended DESIGN.md.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "direction": {"type": "string", "enum": ["quiet-luxury", "cinematic-dark", "precise-technical", "editorial-print"]},
-                "format": {"type": "string", "enum": ["css", "tailwind", "json", "design_md"], "default": "css"},
+                "format": {"type": "string", "enum": ["css", "tailwind", "json", "dtcg", "design_md"], "default": "css"},
+                "verbosity": {"type": "string", "enum": ["compact", "extended"], "default": "extended", "description": "Applies to design_md: concise 30-line brief or full 14-section spec."},
             },
             "required": ["direction"],
-        },
-    },
-    {
-        "name": "get_pattern",
-        "description": "Read one named failure from taste/anti-patterns.yaml, or search them.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "id": {"type": "string", "description": "Anti-pattern id, such as skeleton.saas-landing."},
-                "query": {"type": "string", "description": "Search id, why, instead, and signals."},
-            },
         },
     },
     {
@@ -472,6 +558,8 @@ TOOLS = [
                 "url": {"type": "string", "description": "http or https URL."},
                 "ws_endpoint": {"type": "string", "description": "Optional existing DevTools WebSocket. Does not launch Chromium."},
                 "allow_fonts": {"type": "array", "items": {"type": "string"}},
+                "desktop_width": {"type": "integer", "default": 1280},
+                "mobile_width": {"type": "integer", "default": 375},
             },
             "required": ["url"],
         },

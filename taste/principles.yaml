@@ -182,6 +182,18 @@ rules:
     test: One of those faces is newly introduced and is not in the brand guide.
     fix: Use a system stack or a quieter open face (Newsreader, Public Sans, Source Serif 4, Source Sans 3, IBM Plex, Literata, Schibsted Grotesk). Fix the layout first.
 
+  - id: type.no-hairline-body
+    dimension: accessibility
+    rule: Reading copy, labels, and navigation at 18px or below never use hairline weights (font-weight below 300).
+    test: Body, paragraph, list, or nav selectors set font-weight 100 or 200 below 18px.
+    fix: Set running copy and navigation to weight 400 (or 500 for short UI labels) even if a captured site prints hairline type.
+
+  - id: type.caps-tracking
+    dimension: restraint
+    rule: Any uppercase text transform carries positive letter-spacing (>= 0.04em) and stays on one kicker or table label.
+    test: text-transform uppercase appears without positive letter-spacing, or wraps a full sentence.
+    fix: Add 0.05em-0.08em tracking to the single kicker, or switch to sentence case with zero tracking.
+
   - id: density.match-job
     dimension: product-fit
     rule: Density matches the job and the direction's density line.
@@ -308,6 +320,24 @@ rules:
     test: Only the logo and palette differ from the reference or a template.
     fix: Rebuild around this product's object or data.
 
+  - id: uniqueness.no-averaging
+    dimension: uniqueness
+    rule: Do not average multiple references into a bland neutral middle. Lock one dominant direction and preserve its sharpest trait.
+    test: When references conflict, margins, radii, and palette collapsed to medium beige defaults.
+    fix: Pick one primary direction, name one specific structural rule to keep intact, and limit secondary references to one narrow detail.
+
+  - id: uniqueness.anti-calming
+    dimension: product-fit
+    rule: Do not default utilitarian tools, SaaS products, or technical apps to warm ivory + serif editorial framing unless the product actually owns that context.
+    test: Replacing the brand name with a coffee shop or boutique hotel still makes the hero feel plausible.
+    fix: Switch to precise-technical or the direction the product's job demands, with live work or domain proof in the first viewport.
+
+  - id: uniqueness.media-preservation
+    dimension: uniqueness
+    rule: When a chosen direction or reference depends on real photography, diagram plates, or product captures, provide real media or an explicit art-directed placeholder. Never replace imagery with empty CSS boxes or generic gradients.
+    test: An image-led spread uses CSS geometric blobs or empty bordered rectangles in place of the subject.
+    fix: Insert real photography, structured SVG schematics/charts grounded in real data, or explicitly dimensioned art-directed frames.
+
   - id: product.sentence
     dimension: product-fit
     rule: "Write: This is a [job] for [who], and it should feel like [reference], because [structural reason]."
@@ -379,3 +409,9 @@ rules:
     rule: Tab order follows visual order.
     test: Tabbing jumps away from the visual sequence.
     fix: Match the DOM to the visual order.
+
+  - id: a11y.semantics
+    dimension: accessibility
+    rule: Native interactive elements (<button>, <a>, <label>), declared image dimensions, scroll-margin-top on anchored headings, and zoom enabled in viewport meta.
+    test: Clickable <div>/<span> without button semantics, user-scalable=no in viewport meta, or sticky headers covering jumped #anchors.
+    fix: Use <button type="button"> or <a href>, set scroll-margin-top on anchored sections, declare width/height on images, and allow pinch zoom.

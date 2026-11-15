@@ -119,6 +119,9 @@ EVAL_DOM_JS = r"""
   const smallTargets = [];
   const unlabeledControls = [];
   const firstFoldButtons = [];
+  const hairlineBodyText = [];
+  const nonTabularTables = [];
+  const unsizedImages = [];
   let h1Count = 0;
   let bodyFontSize = null;
   let skippedNegativeCount = 0;
@@ -174,6 +177,14 @@ EVAL_DOM_JS = r"""
         const r = ratio(effFg, bg);
         const fs = parseFloat(cs.fontSize) || 16;
         const fw = parseInt(cs.fontWeight, 10) || 400;
+        if (fw < 300 && fs <= 18 && hairlineBodyText.length < 10) {
+          hairlineBodyText.push({
+            element: tag + (el.className ? '.' + String(el.className).trim().split(/\s+/)[0] : ''),
+            text: el.textContent.trim().slice(0, 40),
+            size: Number(fs.toFixed(1)),
+            weight: fw,
+          });
+        }
         const threshold = (fs >= 24 || (fs >= 18.66 && fw >= 700)) ? 3.0 : 4.5;
         if (r < threshold && contrastFailures.length < 15) {
           contrastFailures.push({
@@ -209,6 +220,31 @@ EVAL_DOM_JS = r"""
       }
     }
 
+    if (tag === 'table') {
+      const numericCells = Array.from(el.querySelectorAll('td')).filter((td) => /\d/.test(td.textContent || ''));
+      if (numericCells.length > 0) {
+        const tableFvn = (cs.fontVariantNumeric || '').toLowerCase();
+        const hasTabular = tableFvn.includes('tabular-nums') || numericCells.some((td) => (getComputedStyle(td).fontVariantNumeric || '').toLowerCase().includes('tabular-nums'));
+        if (!hasTabular && nonTabularTables.length < 10) {
+          nonTabularTables.push({
+            element: 'table' + (el.className ? '.' + String(el.className).trim().split(/\s+/)[0] : ''),
+            sample: numericCells[0].textContent.trim().slice(0, 24),
+          });
+        }
+      }
+    }
+
+    if (tag === 'img') {
+      const hasAttrDims = el.hasAttribute('width') && el.hasAttribute('height');
+      const hasAspect = cs.aspectRatio && cs.aspectRatio !== 'auto';
+      if (!hasAttrDims && !hasAspect && unsizedImages.length < 10) {
+        unsizedImages.push({
+          element: 'img',
+          src: (el.getAttribute('src') || '').slice(0, 60),
+        });
+      }
+    }
+
     if (['input', 'textarea', 'select'].includes(tag)) {
       const t = (el.getAttribute('type') || '').toLowerCase();
       if (!['hidden', 'submit', 'button', 'reset'].includes(t)) {
@@ -236,6 +272,9 @@ EVAL_DOM_JS = r"""
     smallTargets,
     unlabeledControls,
     firstFoldButtons,
+    hairlineBodyText,
+    nonTabularTables,
+    unsizedImages,
     skippedNegativeCount,
   };
 })()
@@ -453,7 +492,13 @@ def navigate_and_wait(client: CdpClient, url: str) -> None:
     client.wait_for_event("Page.loadEventFired")
 
 
-def inspect_with_chromium(url: str, chrome_bin: str, desktop_w: int, mobile_w: int) -> dict:
+def inspect_with_chromium(
+    url: str,
+    chrome_bin: str,
+    desktop_w: int,
+    mobile_w: int,
+    screenshot_dir: Path | None = None,
+) -> dict:
     with tempfile.TemporaryDirectory(prefix="pt-critique-") as profile_dir:
         cmd = [
             chrome_bin,
@@ -503,10 +548,22 @@ def inspect_with_chromium(url: str, chrome_bin: str, desktop_w: int, mobile_w: i
             )
             desktop = evaluate_value(desktop_res)
             desktop["targetWidth"] = desktop_w
+            screenshots: dict[str, str] = {}
+            if screenshot_dir is not None:
+                screenshot_dir.mkdir(parents=True, exist_ok=True)
+                shot = client.call("Page.captureScreenshot", {"format": "png"})
+                if shot.get("data"):
+                    d_path = screenshot_dir / "desktop.png"
+                    d_path.write_bytes(base64.b64decode(shot["data"]))
+                    screenshots["desktop"] = str(d_path)
 
             client.call(
                 "Emulation.setDeviceMetricsOverride",
                 {"width": mobile_w, "height": 812, "deviceScaleFactor": 2, "mobile": True},
+            )
+            client.call(
+                "Runtime.evaluate",
+                {"expression": "new Promise(r => setTimeout(r, 80))", "awaitPromise": True},
             )
             mobile_res = client.call(
                 "Runtime.evaluate",
@@ -514,7 +571,16 @@ def inspect_with_chromium(url: str, chrome_bin: str, desktop_w: int, mobile_w: i
             )
             mobile = evaluate_value(mobile_res)
             mobile["targetWidth"] = mobile_w
-            return {"mode": "chromium-cdp", "chrome": chrome_bin, "desktop": desktop, "mobile": mobile}
+            if screenshot_dir is not None:
+                shot = client.call("Page.captureScreenshot", {"format": "png"})
+                if shot.get("data"):
+                    m_path = screenshot_dir / "mobile.png"
+                    m_path.write_bytes(base64.b64decode(shot["data"]))
+                    screenshots["mobile"] = str(m_path)
+            payload = {"mode": "chromium-cdp", "chrome": chrome_bin, "desktop": desktop, "mobile": mobile}
+            if screenshots:
+                payload["screenshots"] = screenshots
+            return payload
         finally:
             if client is not None:
                 client.close()
@@ -758,7 +824,84 @@ def dom_metrics_to_findings(
                 )
             )
 
+    for hb in desktop.get("hairlineBodyText", []):
+        findings.append(
+            audit.Finding(
+                url,
+                0,
+                "type.no-hairline-body",
+                "typography",
+                "error",
+                f"Computed font-weight {hb['weight']} at {hb['size']}px on {hb['element']} ({hb['text']!r}) harms reading legibility.",
+                "Use font-weight 400-500 for reading copy and UI labels <= 18px; reserve weights < 300 for display headlines >= 48px.",
+            )
+        )
+
+    for nt in desktop.get("nonTabularTables", []):
+        findings.append(
+            audit.Finding(
+                url,
+                0,
+                "type.numbers",
+                "typography",
+                "warn",
+                f"Rendered numeric {nt['element']} (sample {nt['sample']!r}) lacks computed font-variant-numeric: tabular-nums.",
+                "Apply font-variant-numeric: tabular-nums on numeric tables so columns align vertically.",
+            )
+        )
+
+    for ui in desktop.get("unsizedImages", []):
+        findings.append(
+            audit.Finding(
+                url,
+                0,
+                "a11y.semantics",
+                "accessibility",
+                "warn",
+                f"Rendered <{ui['element']}> ({ui['src'] or 'inline'}) lacks width/height attributes or CSS aspect-ratio.",
+                "Declare explicit width and height attributes (or CSS aspect-ratio) on rendered images to prevent layout shift.",
+            )
+        )
+
     return findings
+
+
+def run_url_critique(
+    url: str,
+    desktop_width: int = 1280,
+    mobile_width: int = 375,
+    allow_fonts: set[str] | None = None,
+    no_browser: bool = False,
+    chrome_path: str | None = None,
+    screenshot_dir: str | Path | None = None,
+) -> dict:
+    """Critique a live URL using headless Chromium CDP (or HTTP fallback) and return structured results."""
+    assert_http_url(url)
+    norm_fonts = {f.strip().lower() for f in (allow_fonts or set()) if f and f.strip()}
+    chrome_bin = None if no_browser else find_chromium_binary(chrome_path)
+    shot_path = Path(screenshot_dir) if screenshot_dir else None
+
+    if chrome_bin:
+        report_meta = inspect_with_chromium(
+            url, chrome_bin, desktop_width, mobile_width, screenshot_dir=shot_path
+        )
+        findings = dom_metrics_to_findings(
+            url, report_meta["desktop"], report_meta["mobile"], norm_fonts
+        )
+    else:
+        report_meta, findings = inspect_http_fallback(url, norm_fonts)
+
+    scores = audit.score_dimensions(findings)
+    return {
+        "url": url,
+        "mode": report_meta["mode"],
+        "meta": report_meta,
+        "scores": scores,
+        "findings": [f.__dict__ for f in findings],
+        "passed": len(findings) == 0,
+        "screenshots": report_meta.get("screenshots", {}),
+        "_finding_objects": findings,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -773,33 +916,40 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--desktop-width", type=int, default=1280)
     parser.add_argument("--mobile-width", type=int, default=375)
     parser.add_argument("--allow-font", action="append", default=[])
+    parser.add_argument("--screenshot-dir", help="Optional directory to write desktop.png and mobile.png via Chromium CDP.")
     parser.add_argument("--warn-only", action="store_true")
     args = parser.parse_args(argv)
 
-    allow_fonts = {f.strip().lower() for f in args.allow_font if f.strip()}
     assert_http_url(args.url)
     if args.ws_endpoint:
+        allow_fonts = {f.strip().lower() for f in args.allow_font if f.strip()}
         report_meta = inspect_with_websocket(args.ws_endpoint, args.url, args.desktop_width, args.mobile_width)
-        findings = dom_metrics_to_findings(args.url, report_meta["desktop"], report_meta["mobile"], allow_fonts)
-    else:
-        chrome_bin = None if args.no_browser else find_chromium_binary(args.chrome_path)
-        if chrome_bin:
-            report_meta = inspect_with_chromium(args.url, chrome_bin, args.desktop_width, args.mobile_width)
-            findings = dom_metrics_to_findings(args.url, report_meta["desktop"], report_meta["mobile"], allow_fonts)
-        else:
-            report_meta, findings = inspect_http_fallback(args.url, allow_fonts)
-
-    scores = audit.score_dimensions(findings)
-    if args.format == "json":
-        payload = {
+        finding_objs = dom_metrics_to_findings(args.url, report_meta["desktop"], report_meta["mobile"], allow_fonts)
+        scores = audit.score_dimensions(finding_objs)
+        result = {
             "url": args.url,
             "mode": report_meta["mode"],
             "meta": report_meta,
             "scores": scores,
-            "findings": [f.__dict__ for f in findings],
-            "passed": len(findings) == 0,
+            "findings": [f.__dict__ for f in finding_objs],
+            "passed": len(finding_objs) == 0,
+            "screenshots": report_meta.get("screenshots", {}),
         }
-        print(json.dumps(payload, indent=2))
+    else:
+        result = run_url_critique(
+            args.url,
+            desktop_width=args.desktop_width,
+            mobile_width=args.mobile_width,
+            allow_fonts=set(args.allow_font),
+            no_browser=args.no_browser,
+            chrome_path=args.chrome_path,
+            screenshot_dir=args.screenshot_dir,
+        )
+        finding_objs = result.pop("_finding_objects")
+        report_meta = result["meta"]
+
+    if args.format == "json":
+        print(json.dumps(result, indent=2))
     else:
         print(f"Premium Taste Live Critique — {args.url} ({report_meta['mode']})")
         if report_meta["mode"] == "chromium-cdp":
@@ -816,13 +966,15 @@ def main(argv: list[str] | None = None) -> int:
                 f"Body: {body_label} | H1s: {d.get('h1Count', 0)} | "
                 f"Radii: {len(d.get('radii') or [])} | First-fold filled CTAs: {len(d.get('firstFoldButtons') or [])}"
             )
+            if report_meta.get("screenshots"):
+                print(f"  Screenshots: {report_meta['screenshots']}")
             if d.get("skippedNegativeCount"):
                 print(f"  Note: skipped {d['skippedNegativeCount']} elements inside [data-taste-specimen=\"negative\"]")
         print()
-        print(audit.format_text(findings, 1))
+        print(audit.format_text(finding_objs, 1))
 
-    has_errors = any(f.severity == "error" for f in findings)
-    return 0 if (args.warn_only or not has_errors) else 1
+    has_error = any(f.severity == "error" for f in finding_objs)
+    return 0 if (args.warn_only or not has_error) else 1
 
 
 if __name__ == "__main__":
