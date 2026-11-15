@@ -126,6 +126,15 @@ window.PREMIUM_TASTE_DATA = {
       "first_screen": "A masthead in small type. An essay continues as a full image with a factual caption, or a text column of about 65–72 characters with the title only modestly larger than the body. A newspaper front ranks several stories by headline size, column width, and position, on one paper color, with rules instead of cards. Navigation is a section, a search, or a few words, not a product bar of buttons."
     }
   ],
+  "choose": [
+    "If this screen is a long text, a story, a catalog essay, a briefing, or a front that ranks several stories, use editorial-print.",
+    "If this screen is a tool for repeated decisions, data, configuration, or writing, use precise-technical. A machine you inspect part by part belongs here too.",
+    "If this screen is a room for one work, a film, music, or night culture, use cinematic-dark. A listening surface is the room where the work is playing, not the app's home.",
+    "If this screen presents an object, a place, or a slow brand as something to look at, use quiet-luxury.",
+    "If two match, pick the job of this screen. A ceramics studio's article is editorial-print. The same studio's bowl page is quiet-luxury. The same studio's order list is precise-technical.",
+    "Never blend all four into one screen. A product may use different directions on different screens. Keep type and color related; change density and structure with the job."
+  ],
+  "registerNote": "Cinematic dark is not \"the same UI with a dark palette\". Quiet luxury is not \"the same UI with a serif and more margin\". If the structure is still the generic skeleton, you have not chosen a direction. You have themed a template.",
   "references": [
     {
       "id": "aesop",
@@ -884,7 +893,69 @@ window.PREMIUM_TASTE_DATA = {
         "accent": "#7a3e2e",
         "on-accent": "#f6f1e8",
         "danger": "#8d2f2f"
-      }
+      },
+      "typography": {
+        "display": {
+          "fontFamily": "Newsreader, Iowan Old Style, Palatino, Georgia, serif",
+          "fontSize": "40px",
+          "fontWeight": "400",
+          "lineHeight": "1.15",
+          "letterSpacing": "-0.015em"
+        },
+        "title": {
+          "fontFamily": "Newsreader, Iowan Old Style, Palatino, Georgia, serif",
+          "fontSize": "28px",
+          "fontWeight": "400",
+          "lineHeight": "1.2"
+        },
+        "body": {
+          "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "1.55"
+        },
+        "ui": {
+          "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "1.4"
+        },
+        "kicker": {
+          "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "13px",
+          "fontWeight": "500",
+          "lineHeight": "1.35",
+          "letterSpacing": "0.06em"
+        },
+        "meta": {
+          "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "13px",
+          "fontWeight": "400",
+          "lineHeight": "1.4"
+        }
+      },
+      "rounded": {
+        "none": "0px",
+        "hairline": "2px"
+      },
+      "spacing": {
+        "xs": "8px",
+        "sm": "12px",
+        "md": "16px",
+        "lg": "24px",
+        "xl": "48px",
+        "2xl": "80px"
+      },
+      "surfaceRows": [
+        {
+          "role": "surface",
+          "hex": "#f3efe6"
+        },
+        {
+          "role": "surface-raised",
+          "hex": "#f7f4ee"
+        }
+      ]
     },
     "cinematic-dark": {
       "name": "Night Room",
@@ -899,7 +970,67 @@ window.PREMIUM_TASTE_DATA = {
         "accent": "#c9846a",
         "on-accent": "#141311",
         "danger": "#e7b2aa"
-      }
+      },
+      "typography": {
+        "display": {
+          "fontFamily": "Schibsted Grotesk, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "40px",
+          "fontWeight": "400",
+          "lineHeight": "1.1"
+        },
+        "title": {
+          "fontFamily": "Schibsted Grotesk, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "24px",
+          "fontWeight": "500",
+          "lineHeight": "1.2"
+        },
+        "body": {
+          "fontFamily": "Schibsted Grotesk, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "1.5"
+        },
+        "ui": {
+          "fontFamily": "Schibsted Grotesk, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "1.4"
+        },
+        "meta": {
+          "fontFamily": "Schibsted Grotesk, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "13px",
+          "fontWeight": "400",
+          "lineHeight": "1.4"
+        },
+        "credit": {
+          "fontFamily": "Source Serif 4, Iowan Old Style, Palatino, Georgia, serif",
+          "fontSize": "15px",
+          "fontWeight": "400",
+          "lineHeight": "1.4",
+          "fontStyle": "italic"
+        }
+      },
+      "rounded": {
+        "none": "0px"
+      },
+      "spacing": {
+        "xs": "8px",
+        "sm": "16px",
+        "md": "24px",
+        "lg": "40px",
+        "xl": "64px",
+        "2xl": "96px"
+      },
+      "surfaceRows": [
+        {
+          "role": "surface",
+          "hex": "#141311"
+        },
+        {
+          "role": "surface-raised",
+          "hex": "#1e1c19"
+        }
+      ]
     },
     "precise-technical": {
       "name": "Instrument",
@@ -914,7 +1045,55 @@ window.PREMIUM_TASTE_DATA = {
         "on-accent": "#f3f6f4",
         "danger": "#8f2d1f",
         "warning": "#8a5a12"
-      }
+      },
+      "typography": {
+        "title": {
+          "fontFamily": "IBM Plex Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "20px",
+          "fontWeight": "500",
+          "lineHeight": "1.3"
+        },
+        "body": {
+          "fontFamily": "IBM Plex Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "1.45"
+        },
+        "label": {
+          "fontFamily": "IBM Plex Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "12px",
+          "fontWeight": "500",
+          "lineHeight": "1.3"
+        },
+        "mono": {
+          "fontFamily": "IBM Plex Mono, ui-monospace, SF Mono, Menlo, Consolas, monospace",
+          "fontSize": "13px",
+          "fontWeight": "400",
+          "lineHeight": "1.4"
+        }
+      },
+      "rounded": {
+        "none": "0px",
+        "control": "4px"
+      },
+      "spacing": {
+        "2xs": "4px",
+        "xs": "8px",
+        "sm": "12px",
+        "md": "16px",
+        "lg": "24px",
+        "xl": "32px"
+      },
+      "surfaceRows": [
+        {
+          "role": "surface",
+          "hex": "#f5f5f2"
+        },
+        {
+          "role": "surface-raised",
+          "hex": "#ffffff"
+        }
+      ]
     },
     "editorial-print": {
       "name": "Column",
@@ -928,7 +1107,67 @@ window.PREMIUM_TASTE_DATA = {
         "line": "#8a8176",
         "accent": "#1c1917",
         "danger": "#8d2f2f"
-      }
+      },
+      "typography": {
+        "display": {
+          "fontFamily": "Source Serif 4, Iowan Old Style, Palatino, Georgia, serif",
+          "fontSize": "44px",
+          "fontWeight": "500",
+          "lineHeight": "1.15"
+        },
+        "title": {
+          "fontFamily": "Source Serif 4, Iowan Old Style, Palatino, Georgia, serif",
+          "fontSize": "28px",
+          "fontWeight": "500",
+          "lineHeight": "1.25"
+        },
+        "body": {
+          "fontFamily": "Source Serif 4, Iowan Old Style, Palatino, Georgia, serif",
+          "fontSize": "18px",
+          "fontWeight": "400",
+          "lineHeight": "1.55"
+        },
+        "ui": {
+          "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "1.4"
+        },
+        "caption": {
+          "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "1.4"
+        },
+        "kicker": {
+          "fontFamily": "Public Sans, system-ui, Segoe UI, Helvetica, Arial, sans-serif",
+          "fontSize": "13px",
+          "fontWeight": "500",
+          "lineHeight": "1.35",
+          "letterSpacing": "0.06em"
+        }
+      },
+      "rounded": {
+        "none": "0px"
+      },
+      "spacing": {
+        "xs": "8px",
+        "sm": "16px",
+        "md": "24px",
+        "lg": "32px",
+        "xl": "48px",
+        "2xl": "80px"
+      },
+      "surfaceRows": [
+        {
+          "role": "surface",
+          "hex": "#f6f1e8"
+        },
+        {
+          "role": "surface-raised",
+          "hex": "#fbf7f1"
+        }
+      ]
     }
   }
 };

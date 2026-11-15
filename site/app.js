@@ -10,6 +10,25 @@
   };
   var Audit = window.PremiumTasteAudit;
 
+  (DATA.references || []).forEach(function (item) {
+    item._search = [item.id, item.title, item.job, item.summary, (item.tags || []).join(" ")].join(" ").toLowerCase();
+  });
+
+  function debounce(fn, wait) {
+    var timer = 0;
+    return function () {
+      var args = arguments;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(function () {
+        fn.apply(null, args);
+      }, wait);
+    };
+  }
+
+  function tokenSlug(value) {
+    return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
   function escapeHtml(str) {
     return String(str == null ? "" : str)
       .replace(/&/g, "&amp;")
@@ -388,6 +407,8 @@
 
   wireTablist(document.getElementById("scenario-tabs"), function (tab) {
     wb.scenario = tab.getAttribute("data-scenario") || "ai";
+    var stage = document.getElementById("workbench-stage");
+    if (stage && tab.id) stage.setAttribute("aria-labelledby", tab.id);
     renderWorkbench();
   });
 
@@ -468,6 +489,7 @@
   };
 
   var auditFileInput = document.getElementById("audit-file-name");
+  var auditFontsInput = document.getElementById("audit-allow-fonts");
   var auditCodeInput = document.getElementById("audit-code-input");
   var auditVerdict = document.getElementById("audit-verdict");
   var auditScoresEl = document.getElementById("audit-scores");
@@ -484,10 +506,17 @@
     ["product_fit", "Product fit"],
   ];
 
+  function allowFontList() {
+    if (!auditFontsInput) return [];
+    return auditFontsInput.value.split(",").map(function (name) {
+      return name.trim();
+    }).filter(Boolean);
+  }
+
   function runLiveAudit() {
     if (!Audit || !auditCodeInput) return;
     var fname = (auditFileInput && auditFileInput.value.trim()) || "snippet.html";
-    var res = Audit.auditCode(auditCodeInput.value, fname);
+    var res = Audit.auditCode(auditCodeInput.value, fname, { allowFonts: allowFontList() });
     latestAuditResult = res;
 
     if (auditVerdict) {
@@ -539,11 +568,13 @@
     }
   }
 
+  var scheduleLiveAudit = debounce(runLiveAudit, 150);
   if (auditCodeInput) {
     auditCodeInput.value = AUDIT_PRESETS.saas.code;
-    auditCodeInput.addEventListener("input", runLiveAudit);
+    auditCodeInput.addEventListener("input", scheduleLiveAudit);
   }
-  if (auditFileInput) auditFileInput.addEventListener("input", runLiveAudit);
+  if (auditFileInput) auditFileInput.addEventListener("input", scheduleLiveAudit);
+  if (auditFontsInput) auditFontsInput.addEventListener("input", scheduleLiveAudit);
 
   var presetBtns = Array.prototype.slice.call(document.querySelectorAll("[data-preset]"));
   presetBtns.forEach(function (btn) {
@@ -584,11 +615,11 @@
     var dirLine =
       dir === "auto"
         ? "Pick the closest direction in taste/directions.yaml and one reference in taste/references/index.yaml."
-        : "Use direction `" + dir + "` in taste/directions.yaml and load one matching reference from taste/references/index.yaml.";
+        : "Use direction " + dir + " in taste/directions.yaml and load one matching reference from taste/references/index.yaml.";
     cmdPrompt.textContent =
       "Read AGENTS.md in .premium-taste/ (or https://github.com/02-OS/premium-taste) and follow its load order.\n" +
       dirLine + "\n" +
-      "Refuse all generic SaaS anti-patterns in taste/anti-patterns.yaml, then run skills/critique-ui.md and `python3 scripts/audit.py` on changed files.\n\n" +
+      "Refuse all generic SaaS anti-patterns in taste/anti-patterns.yaml, then run skills/critique-ui/SKILL.md and python3 scripts/audit.py on changed files.\n\n" +
       "Job of this screen: " + job;
   }
 
@@ -633,9 +664,15 @@
     if (!pack) return;
     tokenState.packId = dirId;
     tokenState.packName = pack.name || dirId;
+    tokenState.pack = pack;
+    tokenState.colors = {};
+    Object.keys(pack.colors || {}).forEach(function (key) {
+      tokenState.colors[key] = pack.colors[key];
+    });
     TOKEN_KEYS.forEach(function (item) {
-      var val = pack.colors && pack.colors[item.key];
-      tokenState.colors[item.key] = val || (dirId === "editorial-print" && item.key === "on-accent" ? "#f6f1e8" : item.fallback);
+      if (!tokenState.colors[item.key]) {
+        tokenState.colors[item.key] = dirId === "editorial-print" && item.key === "on-accent" ? "#f6f1e8" : item.fallback;
+      }
     });
     Array.prototype.forEach.call(document.querySelectorAll("[data-token-pack]"), function (b) {
       b.setAttribute("aria-pressed", b.getAttribute("data-token-pack") === dirId ? "true" : "false");
@@ -726,23 +763,96 @@
     }
 
     if (tokenExportCode) {
+      var pack = tokenState.pack || {};
       var lines = [];
+      var colorKeys = Object.keys(c);
+      function pushScale(prefix) {
+        colorKeys.forEach(function (key) {
+          lines.push("  " + prefix + key + ": " + c[key] + ";");
+        });
+        Object.keys(pack.spacing || {}).forEach(function (key) {
+          lines.push("  " + prefix + "space-" + key + ": " + pack.spacing[key] + ";");
+        });
+        Object.keys(pack.rounded || {}).forEach(function (key) {
+          lines.push("  " + prefix + "radius-" + key + ": " + pack.rounded[key] + ";");
+        });
+        Object.keys(pack.typography || {}).forEach(function (role) {
+          var spec = pack.typography[role];
+          if (!spec || typeof spec !== "object") return;
+          Object.keys(spec).forEach(function (field) {
+            lines.push("  " + prefix + "font-" + role + "-" + tokenSlug(field) + ": " + spec[field] + ";");
+          });
+        });
+      }
       if (tokenState.exportMode === "tailwind") {
         lines.push("/* Premium Taste — " + tokenState.packName + " (" + tokenState.packId + ") */");
         lines.push("@theme {");
-        TOKEN_KEYS.forEach(function (k) { lines.push("  --color-pt-" + k.key + ": " + c[k.key] + ";"); });
+        colorKeys.forEach(function (key) { lines.push("  --color-pt-" + key + ": " + c[key] + ";"); });
+        Object.keys(pack.spacing || {}).forEach(function (key) {
+          lines.push("  --pt-space-" + key + ": " + pack.spacing[key] + ";");
+        });
+        Object.keys(pack.rounded || {}).forEach(function (key) {
+          lines.push("  --pt-radius-" + key + ": " + pack.rounded[key] + ";");
+        });
+        Object.keys(pack.typography || {}).forEach(function (role) {
+          var spec = pack.typography[role];
+          if (!spec || typeof spec !== "object") return;
+          Object.keys(spec).forEach(function (field) {
+            lines.push("  --pt-font-" + role + "-" + tokenSlug(field) + ": " + spec[field] + ";");
+          });
+        });
         lines.push("}");
       } else if (tokenState.exportMode === "design") {
         lines.push("---");
         lines.push("name: " + tokenState.packName);
         lines.push("direction: " + tokenState.packId);
         lines.push("colors:");
-        TOKEN_KEYS.forEach(function (k) { lines.push("  " + k.key + ': "' + c[k.key] + '"'); });
+        colorKeys.forEach(function (key) { lines.push("  " + key + ': "' + c[key] + '"'); });
+        var surfaceRows = (pack.surfaceRows || []).map(function (row) {
+          return { role: row.role, hex: c[row.role] || row.hex };
+        });
+        if (surfaceRows.length) {
+          lines.push("surfaceRows:");
+          surfaceRows.forEach(function (row) {
+            lines.push("  - role: " + row.role);
+            lines.push('    hex: "' + row.hex + '"');
+          });
+        }
+        if (pack.typography) {
+          lines.push("typography:");
+          Object.keys(pack.typography).forEach(function (role) {
+            var spec = pack.typography[role];
+            lines.push("  " + role + ":");
+            if (spec && typeof spec === "object") {
+              Object.keys(spec).forEach(function (field) {
+                lines.push("    " + field + ": " + spec[field]);
+              });
+            }
+          });
+        }
+        if (pack.rounded) {
+          lines.push("rounded:");
+          Object.keys(pack.rounded).forEach(function (key) {
+            lines.push("  " + key + ": " + pack.rounded[key]);
+          });
+        }
+        if (pack.spacing) {
+          lines.push("spacing:");
+          Object.keys(pack.spacing).forEach(function (key) {
+            lines.push("  " + key + ": " + pack.spacing[key]);
+          });
+        }
+        if (pack.imagery) {
+          lines.push("imagery:");
+          Object.keys(pack.imagery).forEach(function (key) {
+            lines.push("  " + key + ": " + pack.imagery[key]);
+          });
+        }
         lines.push("---");
       } else {
         lines.push("/* Premium Taste — " + tokenState.packName + " (" + tokenState.packId + ") */");
         lines.push(":root {");
-        TOKEN_KEYS.forEach(function (k) { lines.push("  --pt-" + k.key + ": " + c[k.key] + ";"); });
+        pushScale("--pt-");
         lines.push("}");
       }
       tokenExportCode.textContent = lines.join("\n");
@@ -814,7 +924,7 @@
     var items = DATA.references.filter(function (r) {
       if (refState.dir !== "all" && r.direction !== refState.dir) return false;
       if (!q) return true;
-      return [r.id, r.title, r.job, r.summary, (r.tags || []).join(" ")].join(" ").toLowerCase().indexOf(q) !== -1;
+      return (r._search || "").indexOf(q) !== -1;
     });
 
     if (!items.length) {
@@ -844,14 +954,16 @@
         );
       })
       .join("");
+  }
 
-    Array.prototype.forEach.call(refListEl.querySelectorAll(".ref-btn"), function (btn) {
-      btn.addEventListener("click", function () {
-        var open = btn.getAttribute("aria-expanded") === "true";
-        btn.setAttribute("aria-expanded", open ? "false" : "true");
-        var drawer = document.getElementById(btn.getAttribute("aria-controls"));
-        if (drawer) drawer.hidden = open;
-      });
+  if (refListEl) {
+    refListEl.addEventListener("click", function (event) {
+      var btn = event.target.closest ? event.target.closest(".ref-btn") : null;
+      if (!btn || !refListEl.contains(btn)) return;
+      var open = btn.getAttribute("aria-expanded") === "true";
+      btn.setAttribute("aria-expanded", open ? "false" : "true");
+      var drawer = document.getElementById(btn.getAttribute("aria-controls"));
+      if (drawer) drawer.hidden = open;
     });
   }
 
@@ -867,10 +979,10 @@
     });
   }
   if (refSearchEl) {
-    refSearchEl.addEventListener("input", function () {
+    refSearchEl.addEventListener("input", debounce(function () {
       refState.query = refSearchEl.value.trim();
       renderReferences();
-    });
+    }, 150));
   }
   renderReferences();
 
@@ -888,7 +1000,7 @@
         return (
           "<tr>" +
           "<td><code>" + escapeHtml(ap.id) + "</code></td>" +
-          "<td>" + escapeHtml(ap.description || "") + "</td>" +
+          "<td>" + escapeHtml(ap.why || ap.description || "") + "</td>" +
           "<td>" + escapeHtml((ap.signals || []).slice(0, 2).join("; ")) + "</td>" +
           "<td>" + escapeHtml(ap.instead || "") + "</td>" +
           "</tr>"

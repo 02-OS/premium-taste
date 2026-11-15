@@ -208,7 +208,7 @@ A passing uniqueness score names the idea and the divergence:
 Run `python3 scripts/install.py /path/to/your-project` to copy the core files into `.premium-taste/` and write lightweight pointer files for your coding agent, or wire them manually:
 
 - Claude Code: copy this file to `.claude/skills/critique-ui/SKILL.md`, or rely on `CLAUDE.md` in this repo.
-- Cursor: add a rule that says to follow `skills/critique-ui.md` before finishing UI work.
+- Cursor: add a rule that says to follow `skills/critique-ui/SKILL.md` before finishing UI work.
 - Codex, Grok, and others: point the agent at this file plus `AGENTS.md`.
 
 Do not paste the principles into the host agent's rule file. Link them, so the rules stay in one place.

@@ -97,6 +97,8 @@
             <div class="editor-bar">
               <label for="audit-file-name">Filename context</label>
               <input id="audit-file-name" type="text" value="hero.html" spellcheck="false" />
+              <label for="audit-allow-fonts">Allowed fonts</label>
+              <input id="audit-allow-fonts" type="text" value="" placeholder="comma-separated brand faces" spellcheck="false" />
             </div>
             <div class="editor-area-wrap">
               <label class="sr-only" for="audit-code-input">HTML, CSS, or JSX code snippet to audit</label>
@@ -176,7 +178,7 @@
   }
 }</pre>
               </div>
-              <p class="sub-caption">Tools exposed: <code>pick_direction</code>, <code>get_reference</code>, <code>get_tokens</code>, <code>audit_ui</code>.</p>
+              <p class="sub-caption">Tools exposed: <code>pick_direction</code>, <code>get_reference</code>, <code>get_pattern</code>, <code>get_tokens</code>, <code>audit_ui</code>, <code>verify_url</code>. Resources use <code>premium-taste://</code> URIs. Prompts: <code>critique-ui</code>, <code>choose-direction</code>.</p>
             </div>
 
             <div class="terminal-panel" role="tabpanel" id="spanel-cli" aria-labelledby="stab-cli" hidden>
@@ -359,7 +361,7 @@ python3 scripts/check_catalog.py</pre>
         <div class="index-list">
           <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/AGENTS.md" target="_blank" rel="noreferrer"><code>AGENTS.md</code><span>Mandatory load order and refusal rules</span></a>
           <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/install.sh" target="_blank" rel="noreferrer"><code>install.sh</code><span>Zero-clone curl installer supporting --agent and --mcp</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/audit.py" target="_blank" rel="noreferrer"><code>scripts/audit.py</code><span>Deterministic static linter (HTML, CSS, JSX, TSX, Vue, Svelte)</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/audit.py" target="_blank" rel="noreferrer"><code>scripts/audit.py</code><span>Deterministic static linter (HTML, CSS, JSX, TSX, Vue, Svelte, Astro)</span></a>
           <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/critique_url.py" target="_blank" rel="noreferrer"><code>scripts/critique_url.py</code><span>Headless Chromium CDP live DOM contrast &amp; layout checker</span></a>
           <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/mcp_server.py" target="_blank" rel="noreferrer"><code>scripts/mcp_server.py</code><span>Stdlib JSON-RPC 2.0 MCP server over stdio</span></a>
           <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/install.py" target="_blank" rel="noreferrer"><code>scripts/install.py</code><span>Copies .premium-taste/, writes agent skills, merges .mcp.json</span></a>
@@ -375,8 +377,8 @@ python3 scripts/check_catalog.py</pre>
     </section>
   </main>
 
-  <script src="./data.js"></script>
-  <script src="./auditor.js"></script>
-  <script src="./app.js"></script>
+  <script src="./data.js" defer></script>
+  <script src="./auditor.js" defer></script>
+  <script src="./app.js" defer></script>
 </body>
 </html>

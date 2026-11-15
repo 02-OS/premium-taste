@@ -6,7 +6,7 @@ Paste these in front of a task. Point the agent at this repo first. The prompts 
 
 ```
 Use Premium Taste (`AGENTS.md` in this repo or https://github.com/02-OS/premium-taste).
-Follow its load order: pick one direction and one matching reference, build the screen without generic SaaS skeletons or default palettes, then critique and revise with `skills/critique-ui.md`.
+Follow its load order: pick one direction and one matching reference, build the screen without generic SaaS skeletons or default palettes, then critique and revise with `skills/critique-ui/SKILL.md`.
 
 Screen job: [one sentence with a verb, e.g. "let a developer inspect failed builds"]
 Real content: [names, prices, numbers, states]
@@ -25,14 +25,14 @@ Steal the structural decision named in that file. Do not copy its palette or its
 Content you must use, and must not invent past:
 - [real nouns, prices, names, states]
 
-Then run skills/critique-ui.md on your result and apply the required changes.
+Then run skills/critique-ui/SKILL.md on your result and apply the required changes.
 Output the critique template before the code, and cite rule ids.
 ```
 
 ## Critique something that already exists
 
 ```
-Follow skills/critique-ui.md from the Premium Taste repo.
+Follow skills/critique-ui/SKILL.md from the Premium Taste repo.
 The artifact is [file or description].
 The job of this screen is [verb phrase].
 Score the six dimensions. Cite ids from taste/principles.yaml and taste/anti-patterns.yaml.

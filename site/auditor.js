@@ -59,11 +59,6 @@
   var SPARKLE_RE = /(?:[✦✨🪄]|<Sparkles\b|sparkle-icon)/i;
   var IGNORE_RE = /taste-ignore:\s*([a-z0-9.,\s-]+)/;
 
-  function lineForOffset(text, offset) {
-    if (offset <= 0) return 1;
-    return text.slice(0, offset).split("\n").length;
-  }
-
   function ignoredRulesOnLine(lines, lineNo) {
     var ignored = new Set();
     var indices = [lineNo - 1, lineNo - 2];
@@ -87,6 +82,10 @@
     var h = String(hexColor || "").trim().replace(/^#/, "");
     if (h.length === 3) {
       h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    } else if (h.length === 4) {
+      h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+    } else if (h.length === 8) {
+      h = h.slice(0, 6);
     }
     if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
     return [
@@ -96,9 +95,46 @@
     ];
   }
 
+  function hslToRgb(hue, sat, light) {
+    var chroma = (1 - Math.abs(2 * light - 1)) * sat;
+    var sector = ((hue % 360) + 360) % 360 / 60;
+    var x = chroma * (1 - Math.abs(sector % 2 - 1));
+    var red = 0, green = 0, blue = 0;
+    if (sector < 1) { red = chroma; green = x; }
+    else if (sector < 2) { red = x; green = chroma; }
+    else if (sector < 3) { green = chroma; blue = x; }
+    else if (sector < 4) { green = x; blue = chroma; }
+    else if (sector < 5) { red = x; blue = chroma; }
+    else { red = chroma; blue = x; }
+    var match = light - chroma / 2;
+    return [Math.round((red + match) * 255), Math.round((green + match) * 255), Math.round((blue + match) * 255)];
+  }
+
+  function parseColor(token, rootVars, depth) {
+    var value = String(token || "").trim().replace(/;$/, "");
+    var varMatch = /^var\(\s*(--[A-Za-z0-9_-]+)/i.exec(value);
+    if (varMatch) {
+      if ((depth || 0) >= 1 || !rootVars) return null;
+      if (!Object.prototype.hasOwnProperty.call(rootVars, varMatch[1])) return null;
+      return parseColor(rootVars[varMatch[1]], rootVars, (depth || 0) + 1);
+    }
+    if (value.charAt(0) === "#") return hexToRgb(value);
+    var rgb = /^rgba?\(\s*([0-9.]+%?)\s*[, ]\s*([0-9.]+%?)\s*[, ]\s*([0-9.]+%?)/i.exec(value);
+    if (rgb) {
+      function channel(part) {
+        if (/%$/.test(part)) return Math.max(0, Math.min(255, Math.round(parseFloat(part) * 2.55)));
+        return Math.max(0, Math.min(255, Math.round(parseFloat(part))));
+      }
+      return [channel(rgb[1]), channel(rgb[2]), channel(rgb[3])];
+    }
+    var hsl = /^hsla?\(\s*([0-9.]+)\s*[, ]\s*([0-9.]+)%\s*[, ]\s*([0-9.]+)%/i.exec(value);
+    if (hsl) return hslToRgb(parseFloat(hsl[1]), parseFloat(hsl[2]) / 100, parseFloat(hsl[3]) / 100);
+    return null;
+  }
+
   function contrastRatio(hexA, hexB) {
-    var a = hexToRgb(hexA);
-    var b = hexToRgb(hexB);
+    var a = parseColor(hexA);
+    var b = parseColor(hexB);
     if (!a || !b) return null;
     function relLum(rgb) {
       var ch = rgb.map(function (v) {
@@ -112,6 +148,98 @@
     return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
   }
 
+  function contrastRatioFromRgb(a, b) {
+    function relLum(rgb) {
+      var ch = rgb.map(function (v) {
+        var c = v / 255;
+        return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+    }
+    var la = relLum(a);
+    var lb = relLum(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+
+  function scanTag(html, start) {
+    if (html.charAt(start) !== "<") return null;
+    var second = html.charAt(start + 1);
+    if (second === "/" || second === "!" || second === "?") return null;
+    if (!/[A-Za-z_]/.test(second)) return null;
+    var nameEnd = start + 2;
+    while (nameEnd < html.length && /[A-Za-z0-9_:-]/.test(html.charAt(nameEnd))) nameEnd++;
+    var tag = html.slice(start + 1, nameEnd).toLowerCase();
+    var quote = "";
+    var brace = 0;
+    var cursor = nameEnd;
+    while (cursor < html.length) {
+      var ch = html.charAt(cursor);
+      if (quote) {
+        if (ch === quote) quote = "";
+        cursor++;
+        continue;
+      }
+      if (ch === "'" || ch === '"') { quote = ch; cursor++; continue; }
+      if (ch === "{") brace++;
+      else if (ch === "}" && brace) brace--;
+      else if (ch === ">" && brace === 0) {
+        return { tag: tag, attrs: html.slice(nameEnd, cursor), start: start, end: cursor };
+      }
+      cursor++;
+    }
+    return null;
+  }
+
+  function iterOpenTags(html) {
+    var out = [];
+    var cursor = 0;
+    while (cursor < html.length) {
+      var start = html.indexOf("<", cursor);
+      if (start === -1) break;
+      var parsed = scanTag(html, start);
+      if (!parsed) { cursor = start + 1; continue; }
+      out.push(parsed);
+      cursor = parsed.end + 1;
+    }
+    return out;
+  }
+
+  function attrValue(attrs, names) {
+    for (var i = 0; i < names.length; i++) {
+      var re = new RegExp("(?:^|[\\s/>])" + names[i] + "\\s*=\\s*(['\"])([\\s\\S]*?)\\1", "i");
+      var match = re.exec(attrs);
+      if (match) return match[2];
+    }
+    return null;
+  }
+
+  function elementInner(html, openEnd, tag) {
+    var depth = 1;
+    var cursor = openEnd + 1;
+    var closer = "</" + tag;
+    while (cursor < html.length && depth) {
+      var next = html.indexOf("<", cursor);
+      if (next === -1) break;
+      if (html.slice(next, next + closer.length).toLowerCase() === closer) {
+        var after = html.charAt(next + closer.length);
+        if (!after || !/[A-Za-z0-9]/.test(after)) {
+          depth--;
+          if (depth === 0) return html.slice(openEnd + 1, next);
+          cursor = next + closer.length;
+          continue;
+        }
+      }
+      var parsed = scanTag(html, next);
+      if (parsed && parsed.tag === tag) {
+        depth++;
+        cursor = parsed.end + 1;
+        continue;
+      }
+      cursor = next + 1;
+    }
+    return html.slice(openEnd + 1);
+  }
+
   function extractCssSegments(text, isCssOnly) {
     if (isCssOnly) return [{ seg: text, base: 0 }];
     var segs = [];
@@ -123,12 +251,26 @@
     return segs;
   }
 
+  function maskKeepNewlines(value) {
+    return String(value).replace(/[^\n]/g, " ");
+  }
+
   function stripNonCopyBlocks(html) {
-    return html
-      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
-      .replace(/<pre\b[^>]*>[\s\S]*?<\/pre>/gi, " ")
-      .replace(/<code\b[^>]*>[\s\S]*?<\/code>/gi, " ");
+    return String(html).replace(/<(script|style|pre|code)\b[^>]*>[\s\S]*?<\/\1>/gi, function (block) {
+      return maskKeepNewlines(block);
+    });
+  }
+
+  function visibleCopy(html) {
+    return stripNonCopyBlocks(html).replace(/<(?:"[^"]*"|'[^']*'|[^>"'])*>/g, function (tag) {
+      return maskKeepNewlines(tag);
+    });
+  }
+
+  function stripComments(css) {
+    return String(css).replace(/\/\*[\s\S]*?\*\//g, function (block) {
+      return maskKeepNewlines(block);
+    });
   }
 
   function scoreDimensions(findings) {
@@ -153,10 +295,30 @@
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  function auditCode(rawText, fileLabel) {
+  function auditCode(rawText, fileLabel, options) {
     var text = String(rawText || "");
     var label = fileLabel || "snippet.html";
-    var isCssOnly = /\.css$/i.test(label) && !/<[a-z]/i.test(text);
+    var opts = options || {};
+    var allowFonts = {};
+    (opts.allowFonts || []).forEach(function (name) {
+      if (String(name).trim()) allowFonts[String(name).trim().toLowerCase()] = true;
+    });
+    var isCssOnly = /\.css$/i.test(label);
+    var newlineAt = [];
+    for (var ni = 0; ni < text.length; ni++) {
+      if (text.charCodeAt(ni) === 10) newlineAt.push(ni);
+    }
+    function lineAt(offset) {
+      if (offset <= 0) return 1;
+      var lo = 0;
+      var hi = newlineAt.length;
+      while (lo < hi) {
+        var mid = (lo + hi) >> 1;
+        if (newlineAt[mid] < offset) lo = mid + 1;
+        else hi = mid;
+      }
+      return lo + 1;
+    }
     var lines = text.split("\n");
     var findings = [];
     var cssSegments = extractCssSegments(text, isCssOnly);
@@ -179,15 +341,15 @@
     var m;
     var gfonts = /fonts\.googleapis\.com\/css[^\s"'>]+/gi;
     while ((m = gfonts.exec(text)) !== null) {
-      fontContexts.push([lineForOffset(text, m.index), m[0].replace(/\+/g, " ")]);
+      fontContexts.push([lineAt( m.index), m[0].replace(/\+/g, " ")]);
     }
     var ffRe = /font-family\s*:\s*([^;}\n]+)/gi;
     while ((m = ffRe.exec(text)) !== null) {
-      fontContexts.push([lineForOffset(text, m.index), m[1]]);
+      fontContexts.push([lineAt( m.index), m[1]]);
     }
     var twFont = /\bfont-(inter|geist|space-grotesk|dm-sans|plus-jakarta|playfair)\b/gi;
     while ((m = twFont.exec(text)) !== null) {
-      fontContexts.push([lineForOffset(text, m.index), m[1].replace(/-/g, " ")]);
+      fontContexts.push([lineAt( m.index), m[1].replace(/-/g, " ")]);
     }
 
     var seenTells = new Set();
@@ -196,6 +358,7 @@
       var snip = fontContexts[i][1];
       for (var j = 0; j < COSTUME_FONTS.length; j++) {
         var face = COSTUME_FONTS[j];
+        if (allowFonts[face.toLowerCase()]) continue;
         var fRe = new RegExp("(^|[^A-Za-z0-9-])" + escapeRegex(face) + "(?![A-Za-z0-9-])", "i");
         if (fRe.test(snip)) {
           var key = face.toLowerCase() + ":" + ln;
@@ -221,20 +384,25 @@
       var ffSeg = /font-family\s*:\s*([^;}\n]+)/gi;
       while ((m = ffSeg.exec(segObj.seg)) !== null) {
         var firstRaw = m[1].split(",")[0].trim().replace(/^["']|["']$/g, "");
-        if (!firstRaw || /^var\(/.test(firstRaw) || GENERIC_FONTS.has(firstRaw.toLowerCase())) continue;
-        if (!Object.prototype.hasOwnProperty.call(declared, firstRaw)) {
-          declared[firstRaw] = lineForOffset(text, segObj.base + m.index);
+        var famKey = firstRaw.toLowerCase();
+        if (!firstRaw || /^var\(/.test(firstRaw) || GENERIC_FONTS.has(famKey)) continue;
+        if (!Object.prototype.hasOwnProperty.call(declared, famKey)) {
+          declared[famKey] = { name: firstRaw, line: lineAt(segObj.base + m.index) };
         }
       }
     }
     var famKeys = Object.keys(declared);
     if (famKeys.length > 2) {
+      var famNames = famKeys.map(function (key) { return declared[key].name; });
+      var famLine = famKeys.reduce(function (min, key) {
+        return Math.min(min, declared[key].line);
+      }, declared[famKeys[0]].line);
       add(
-        declared[famKeys[0]],
+        famLine,
         "type.two-families",
         "restraint",
         "error",
-        "Found " + famKeys.length + " primary font families (" + famKeys.join(", ") + "). Maximum is 2.",
+        "Found " + famKeys.length + " primary font families (" + famNames.join(", ") + "). Maximum is 2.",
         "Collapse extra roles into weights or sizes of the two primary families."
       );
     }
@@ -245,7 +413,7 @@
       var bgClip = /background-clip\s*:\s*text/gi;
       while ((m = bgClip.exec(segObj.seg)) !== null) {
         add(
-          lineForOffset(text, segObj.base + m.index),
+          lineAt( segObj.base + m.index),
           "color.aurora",
           "restraint",
           "error",
@@ -257,7 +425,7 @@
     var twClip = /\bbg-clip-text\b[^\n]*\bbg-gradient-/g;
     while ((m = twClip.exec(text)) !== null) {
       add(
-        lineForOffset(text, m.index),
+        lineAt( m.index),
         "color.aurora",
         "restraint",
         "error",
@@ -270,7 +438,7 @@
     var indM = /(?:bg-indigo-[4567]00|text-indigo-[56]00|from-indigo-[456]00|bg-violet-[56]00|#4f46e5|#6366f1|#7c3aed)/i.exec(text);
     if (indM) {
       add(
-        lineForOffset(text, indM.index),
+        lineAt( indM.index),
         "color.indigo-default",
         "restraint",
         "warn",
@@ -283,7 +451,7 @@
     var blurRe = /(?:backdrop-filter\s*:\s*blur|backdrop-blur-)/gi;
     while ((m = blurRe.exec(text)) !== null) {
       add(
-        lineForOffset(text, m.index),
+        lineAt( m.index),
         "material.glass-on-flat",
         "restraint",
         "warn",
@@ -295,9 +463,27 @@
     // 6. motion.hover, material.gray-card-shadow, color.contrast, motion.reduced
     var hasMotion = false;
     var hasReducedMotion = text.indexOf("@media (prefers-reduced-motion") !== -1 || text.indexOf("motion-reduce:") !== -1;
+    var rootVars = {};
+    for (s = 0; s < cssSegments.length; s++) {
+      var rootClean = stripComments(cssSegments[s].seg);
+      var rootRule = /([^{}]+)\{([^}]+)\}/g;
+      var rootMatch;
+      while ((rootMatch = rootRule.exec(rootClean)) !== null) {
+        if (!/(?:^|[\s,]):root\b/.test(rootMatch[1])) continue;
+        var propRe = /(--[A-Za-z0-9_-]+)\s*:\s*([^;]+)/g;
+        var propMatch;
+        while ((propMatch = propRe.exec(rootMatch[2])) !== null) rootVars[propMatch[1]] = propMatch[2].trim();
+      }
+    }
+    function firstColorToken(body, propRe) {
+      var found = new RegExp("(?:^|[;{])\\s*(?:" + propRe + ")\\s*:\\s*([^;}]+)", "i").exec(body);
+      if (!found) return null;
+      var token = /#[0-9a-fA-F]{3,8}\b|rgba?\([^)]*\)|hsla?\([^)]*\)|var\(\s*--[A-Za-z0-9_-]+/i.exec(found[1]);
+      return token ? token[0] : null;
+    }
     for (s = 0; s < cssSegments.length; s++) {
       segObj = cssSegments[s];
-      var cleanSeg = segObj.seg.replace(/\/\*[\s\S]*?\*\//g, "");
+      var cleanSeg = stripComments(segObj.seg);
       if (cleanSeg.indexOf("@keyframes") !== -1 || cleanSeg.indexOf("transition:") !== -1 || cleanSeg.indexOf("scroll-behavior:") !== -1) {
         hasMotion = true;
       }
@@ -305,7 +491,7 @@
       while ((m = hoverRe.exec(cleanSeg)) !== null) {
         if (/transform\s*:\s*(?:translate|scale)/i.test(m[2]) && /box-shadow/i.test(m[2])) {
           add(
-            lineForOffset(text, segObj.base + m.index),
+            lineAt( segObj.base + m.index),
             "motion.hover",
             "restraint",
             "error",
@@ -320,7 +506,7 @@
         var body = m[2];
         if (/box-shadow\s*:\s*(?!none|inset)[^;]+/i.test(body) && /border-radius\s*:\s*(?:1[6-9]|[2-9]\d)px/i.test(body)) {
           add(
-            lineForOffset(text, segObj.base + m.index),
+            lineAt( segObj.base + m.index),
             "material.gray-card-shadow",
             "restraint",
             "error",
@@ -328,19 +514,27 @@
             "Use flat paper, margins, and 1px hairlines; reserve shadow for overlays only."
           );
         }
-        var fgM = /(?:^|[;\s])color\s*:\s*(#[0-9a-fA-F]{3,6})\b/i.exec(body);
-        var bgM = /background(?:-color)?\s*:\s*(#[0-9a-fA-F]{3,6})\b/i.exec(body);
-        if (fgM && bgM) {
-          var ratio = contrastRatio(fgM[1], bgM[1]);
-          if (ratio !== null && ratio < 4.5) {
-            add(
-              lineForOffset(text, segObj.base + m.index),
-              "color.contrast",
-              "accessibility",
-              "error",
-              "Contrast " + ratio.toFixed(2) + ":1 between " + fgM[1] + " and " + bgM[1] + " in '" + sel + "' is under 4.5:1.",
-              "Darken muted ink or raise foreground/background contrast to at least 4.5:1."
-            );
+        var fgToken = firstColorToken(body, "(?<![a-z-])color");
+        var bgToken = firstColorToken(body, "background(?:-color)?");
+        if (fgToken && bgToken) {
+          var fgRgb = parseColor(fgToken, rootVars, 0);
+          var bgRgb = parseColor(bgToken, rootVars, 0);
+          if (fgRgb && bgRgb) {
+            var ratio = contrastRatioFromRgb(fgRgb, bgRgb);
+            if (ratio < 4.5) {
+              var fgAt = body.indexOf(fgToken);
+              var bgAt = body.indexOf(bgToken);
+              var propAt = Math.min(fgAt < 0 ? body.length : fgAt, bgAt < 0 ? body.length : bgAt);
+              var bodyStart = m.index + m[1].length + 1;
+              add(
+                lineAt(segObj.base + bodyStart + propAt),
+                "color.contrast",
+                "accessibility",
+                "error",
+                "Contrast " + ratio.toFixed(2) + ":1 between " + fgToken + " and " + bgToken + " in '" + sel + "' is under 4.5:1.",
+                "Darken muted ink or raise foreground/background contrast to at least 4.5:1."
+              );
+            }
           }
         }
       }
@@ -349,7 +543,7 @@
     var twLift = /hover:(?:-?translate-y-|scale-)/g;
     while ((m = twLift.exec(text)) !== null) {
       add(
-        lineForOffset(text, m.index),
+        lineAt( m.index),
         "motion.hover",
         "restraint",
         "error",
@@ -373,7 +567,7 @@
     var outlineNone = /(?:outline\s*:\s*(?:none|0)\b|focus:outline-none)/i.exec(text);
     if (outlineNone && text.indexOf(":focus-visible") === -1 && text.indexOf("focus-visible:") === -1) {
       add(
-        lineForOffset(text, outlineNone.index),
+        lineAt( outlineNone.index),
         "a11y.focus-removed",
         "accessibility",
         "error",
@@ -390,7 +584,7 @@
         var px = parseFloat(m[2]);
         if (px < 14) {
           add(
-            lineForOffset(text, segObj.base + m.index),
+            lineAt( segObj.base + m.index),
             "a11y.size",
             "accessibility",
             "error",
@@ -403,23 +597,26 @@
 
     // 9. HTML/JSX structural, copy & accessibility checks
     if (!isCssOnly) {
-      var labelFors = new Set();
-      var lblRe = /<label\b[^>]*\bfor=["']([^"']+)["']/gi;
-      while ((m = lblRe.exec(text)) !== null) labelFors.add(m[1]);
-
-      var ctrlRe = /<(input|textarea)\b([^>]*)>/gi;
-      while ((m = ctrlRe.exec(text)) !== null) {
-        var attrs = m[2];
-        if (/\btype=["'](?:hidden|submit|button|reset)["']/i.test(attrs)) continue;
-        if (!/\bplaceholder=["']/i.test(attrs)) continue;
-        var hasAria = /\b(?:aria-label|aria-labelledby)=["']/i.test(attrs);
-        var idM = /\bid=["']([^"']+)["']/i.exec(attrs);
-        var hasFor = Boolean(idM && labelFors.has(idM[1]));
-        var prefix = text.slice(Math.max(0, m.index - 250), m.index).toLowerCase();
+      var labelFors = {};
+      var openTags = iterOpenTags(text);
+      openTags.forEach(function (tag) {
+        if (tag.tag !== "label") return;
+        var target = attrValue(tag.attrs, ["for", "htmlFor"]);
+        if (target) labelFors[target] = true;
+      });
+      openTags.forEach(function (tag) {
+        if (tag.tag !== "input" && tag.tag !== "textarea") return;
+        var controlType = (attrValue(tag.attrs, ["type"]) || "").toLowerCase();
+        if (controlType === "hidden" || controlType === "submit" || controlType === "button" || controlType === "reset") return;
+        if (attrValue(tag.attrs, ["placeholder"]) == null) return;
+        var hasAria = attrValue(tag.attrs, ["aria-label", "aria-labelledby"]) != null;
+        var controlId = attrValue(tag.attrs, ["id"]);
+        var hasFor = Boolean(controlId && labelFors[controlId]);
+        var prefix = text.slice(Math.max(0, tag.start - 250), tag.start).toLowerCase();
         var insideLabel = prefix.lastIndexOf("<label") > prefix.lastIndexOf("</label");
         if (!hasAria && !hasFor && !insideLabel) {
           add(
-            lineForOffset(text, m.index),
+            lineAt(tag.start),
             "a11y.placeholder-label",
             "accessibility",
             "error",
@@ -427,24 +624,25 @@
             "Add a visible <label for=...> above or beside the field."
           );
         }
-      }
+      });
 
-      var actRe = /<div\b[^>]*class=["'][^"']*(?:cta|actions|hero-actions|buttons)[^"']*["'][^>]*>([\s\S]*?)<\/div>/gi;
-      while ((m = actRe.exec(text)) !== null) {
-        var inner = m[1];
-        var btnRe = /<(?:button|a)\b[^>]*class=["']([^"']*)["'][^>]*>/gi;
-        var bm;
+      openTags.forEach(function (tag) {
+        if (tag.tag !== "div") return;
+        var className = attrValue(tag.attrs, ["class", "className"]) || "";
+        if (!/(?:^|[\s_])(?:cta|actions|hero-actions|buttons)(?:$|[\s_])/i.test(className)) return;
+        var inner = elementInner(text, tag.end, "div");
         var filled = 0;
-        while ((bm = btnRe.exec(inner)) !== null) {
-          var cls = bm[1];
+        iterOpenTags(inner).forEach(function (innerTag) {
+          if (innerTag.tag !== "button" && innerTag.tag !== "a") return;
+          var cls = attrValue(innerTag.attrs, ["class", "className"]) || "";
           if ((cls.indexOf("btn") !== -1 || cls.indexOf("button") !== -1 || cls.indexOf("bg-") !== -1) &&
               !/\b(?:ghost|secondary|outline|quiet|text|link)\b/i.test(cls)) {
             filled++;
           }
-        }
+        });
         if (filled > 1) {
           add(
-            lineForOffset(text, m.index),
+            lineAt(tag.start),
             "chrome.two-primaries",
             "hierarchy",
             "error",
@@ -452,16 +650,14 @@
             "Keep one filled primary action; demote secondary actions to underlined text or quiet buttons."
           );
         }
-      }
+      });
 
-      var copyHtml = stripNonCopyBlocks(text);
-      var visibleText = copyHtml.replace(/<[^>]+>/g, " ");
+      var visibleText = visibleCopy(text);
       for (var c = 0; c < ABSTRACT_CLICHES.length; c++) {
         var cm = ABSTRACT_CLICHES[c].exec(visibleText);
         if (cm) {
-          var orig = new RegExp(escapeRegex(cm[0]), "i").exec(text);
           add(
-            orig ? lineForOffset(text, orig.index) : 1,
+            lineAt(cm.index),
             "content.abstract-verbs",
             "uniqueness",
             "error",
@@ -473,9 +669,8 @@
 
       var fakeM = FAKE_PROOF_RE.exec(visibleText);
       if (fakeM) {
-        var fakeOrig = new RegExp(escapeRegex(fakeM[0]), "i").exec(text);
         add(
-          fakeOrig ? lineForOffset(text, fakeOrig.index) : 1,
+          lineAt(fakeM.index),
           "content.fake-proof",
           "uniqueness",
           "error",
@@ -484,11 +679,10 @@
         );
       }
 
-      var sparkM = SPARKLE_RE.exec(copyHtml);
+      var sparkM = SPARKLE_RE.exec(stripNonCopyBlocks(text));
       if (sparkM) {
-        var sparkOrig = new RegExp(escapeRegex(sparkM[0]), "i").exec(text);
         add(
-          sparkOrig ? lineForOffset(text, sparkOrig.index) : 1,
+          lineAt(sparkM.index),
           "chrome.sparkle",
           "uniqueness",
           "error",
@@ -503,7 +697,7 @@
       file: label,
       findings: findings,
       scores: scores,
-      passed: !findings.some(function (f) { return f.severity === "error"; }),
+      passed: findings.length === 0,
     };
   }
 
@@ -539,6 +733,7 @@
     scoreDimensions: scoreDimensions,
     contrastRatio: contrastRatio,
     hexToRgb: hexToRgb,
+    parseColor: parseColor,
     formatReport: formatReport,
   };
 })(typeof window !== "undefined" ? window : globalThis);

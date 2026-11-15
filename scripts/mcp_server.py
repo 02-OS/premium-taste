@@ -4,11 +4,8 @@
 Supports both newline-delimited JSON messages (MCP 2024-11-05+) and HTTP-style
 Content-Length framing, replying in whichever framing mode the caller sends.
 
-Tools exposed:
-  - pick_direction: Choose 1 direction + best-fit reference + tokens for a screen job
-  - get_reference: Fetch full 'what to steal' and 'what not to copy' for a reference
-  - get_tokens: Export starter palette tokens as CSS vars, Tailwind v4 @theme, JSON, or DESIGN.md
-  - audit_ui: Run the deterministic Premium Taste static auditor on code or a file path
+Tools: pick_direction, get_reference, get_pattern, get_tokens, audit_ui, verify_url.
+Resources use premium-taste:// paths. Prompts: critique-ui and choose-direction.
 """
 
 from __future__ import annotations
@@ -58,7 +55,15 @@ def load_catalog() -> dict:
         for ref_id in ref_ids
     ]
     tokens = catalog.parse_tokens()
-    return {"directions": directions, "references": references, "tokens": tokens}
+    patterns = catalog.parse_anti_patterns(
+        (ROOT / "taste" / "anti-patterns.yaml").read_text(encoding="utf-8")
+    )
+    return {
+        "directions": directions,
+        "references": references,
+        "tokens": tokens,
+        "patterns": patterns,
+    }
 
 
 def _as_text(val: object) -> str:
@@ -72,7 +77,10 @@ def score_direction(job: str, direction: dict) -> int:
     words = set(re.findall(r"[a-z0-9-]+", text))
     score = 0
     for kw in DIRECTION_KEYWORDS.get(direction["id"], ()):
-        if kw in words or kw in text:
+        if " " in kw:
+            if re.search(rf"(?<![a-z0-9-]){re.escape(kw)}(?![a-z0-9-])", text):
+                score += 3
+        elif kw in words:
             score += 3
     for token in re.findall(r"[a-z0-9-]+", _as_text(direction.get("jobs")).lower()):
         if len(token) > 3 and token in words:
@@ -164,6 +172,26 @@ def tool_get_reference(args: dict, data: dict) -> str:
     return json.dumps({"count": len(filtered), "references": filtered}, indent=2)
 
 
+TOKEN_FORMATS = ("css", "tailwind", "json", "design_md")
+
+
+def _scale_declarations(pack: dict, prefix: str) -> list[str]:
+    lines: list[str] = []
+    for key, value in (pack.get("colors") or {}).items():
+        lines.append(f"  {prefix}{key}: {value};")
+    for key, value in (pack.get("spacing") or {}).items():
+        lines.append(f"  {prefix}space-{key}: {value};")
+    for key, value in (pack.get("rounded") or {}).items():
+        lines.append(f"  {prefix}radius-{key}: {value};")
+    for role, spec in (pack.get("typography") or {}).items():
+        if not isinstance(spec, dict):
+            continue
+        for field, value in spec.items():
+            slug = re.sub(r"[^a-z0-9]+", "-", field.lower()).strip("-")
+            lines.append(f"  {prefix}font-{role}-{slug}: {value};")
+    return lines
+
+
 def tool_get_tokens(args: dict, data: dict) -> str:
     direction = str(args.get("direction", "")).strip().lower()
     fmt = str(args.get("format", "css")).strip().lower()
@@ -171,22 +199,33 @@ def tool_get_tokens(args: dict, data: dict) -> str:
     if not pack:
         valid = ", ".join(data["tokens"].keys())
         raise ValueError(f"Unknown direction '{direction}'. Choose one of: {valid}")
+    if fmt not in TOKEN_FORMATS:
+        raise ValueError(
+            f"Unknown format '{fmt}'. Choose one of: {', '.join(TOKEN_FORMATS)}"
+        )
 
-    colors = pack.get("colors", {})
     if fmt == "design_md":
         return (ROOT / pack["file"]).read_text(encoding="utf-8")
     if fmt == "json":
         return json.dumps(pack, indent=2)
     if fmt == "tailwind":
         lines = [f"/* Premium Taste — {pack['name']} ({direction}) */", "@theme {"]
-        for k, v in colors.items():
-            lines.append(f"  --color-pt-{k}: {v};")
+        for key, value in (pack.get("colors") or {}).items():
+            lines.append(f"  --color-pt-{key}: {value};")
+        for key, value in (pack.get("spacing") or {}).items():
+            lines.append(f"  --pt-space-{key}: {value};")
+        for key, value in (pack.get("rounded") or {}).items():
+            lines.append(f"  --pt-radius-{key}: {value};")
+        for role, spec in (pack.get("typography") or {}).items():
+            if isinstance(spec, dict):
+                for field, value in spec.items():
+                    slug = re.sub(r"[^a-z0-9]+", "-", str(field).lower()).strip("-")
+                    lines.append(f"  --pt-font-{role}-{slug}: {value};")
         lines.append("}")
         return "\n".join(lines)
 
     lines = [f"/* Premium Taste — {pack['name']} ({direction}) */", ":root {"]
-    for k, v in colors.items():
-        lines.append(f"  --pt-{k}: {v};")
+    lines.extend(_scale_declarations(pack, "--pt-"))
     lines.append("}")
     return "\n".join(lines)
 
@@ -201,9 +240,14 @@ def tool_audit_ui(args: dict, _data: dict) -> str:
         findings = audit.audit_text(str(code), label, allow_fonts=allow_fonts)
         count = 1
     elif file_path:
-        target = Path(str(file_path))
+        raw_path = str(file_path)
+        if "\x00" in raw_path or raw_path.startswith("\\\\") or "://" in raw_path:
+            raise ValueError("file_path must be a local filesystem path.")
+        target = Path(raw_path)
         if not target.is_absolute():
             target = (Path.cwd() / target).resolve()
+        else:
+            target = target.resolve()
         if not target.exists():
             raise ValueError(f"File not found: {target}")
         if target.is_dir():
@@ -220,12 +264,139 @@ def tool_audit_ui(args: dict, _data: dict) -> str:
 
     payload = {
         "files_checked": count,
-        "passed": not any(f.severity == "error" for f in findings),
+        "passed": count > 0 and len(findings) == 0,
         "scores": audit.score_dimensions(findings),
         "findings": [f.__dict__ for f in findings],
         "report": audit.format_text(findings, count),
     }
     return json.dumps(payload, indent=2)
+
+
+def tool_get_pattern(args: dict, data: dict) -> str:
+    pattern_id = str(args.get("id", "")).strip()
+    query = str(args.get("query", "")).strip().lower()
+    patterns = data["patterns"]
+    if pattern_id:
+        match = next((item for item in patterns if item["id"] == pattern_id), None)
+        if not match:
+            known = ", ".join(item["id"] for item in patterns)
+            raise ValueError(f"Pattern '{pattern_id}' not found. Available: {known}")
+        return json.dumps(match, indent=2)
+    filtered = patterns
+    if query:
+        filtered = [
+            item
+            for item in patterns
+            if query in item["id"]
+            or query in str(item.get("why", "")).lower()
+            or query in str(item.get("instead", "")).lower()
+            or any(query in str(signal).lower() for signal in item.get("signals") or [])
+        ]
+    return json.dumps({"count": len(filtered), "patterns": filtered}, indent=2)
+
+
+def tool_verify_url(args: dict, _data: dict) -> str:
+    import critique_url
+
+    url = str(args.get("url", "")).strip()
+    critique_url.assert_http_url(url)
+    allow_fonts = {str(f).strip().lower() for f in (args.get("allow_fonts") or []) if str(f).strip()}
+    ws_endpoint = str(args.get("ws_endpoint", "")).strip()
+    if ws_endpoint:
+        meta = critique_url.inspect_with_websocket(ws_endpoint, url, 1280, 375)
+        findings = critique_url.dom_metrics_to_findings(url, meta.get("desktop"), meta.get("mobile"), allow_fonts)
+    else:
+        # HTTP fallback never launches Chromium, so a missing browser cannot hang the server.
+        meta, findings = critique_url.inspect_http_fallback(url, allow_fonts)
+    payload = {
+        "url": url,
+        "mode": meta.get("mode"),
+        "passed": not meta.get("error") and len(findings) == 0,
+        "error": meta.get("error"),
+        "scores": audit.score_dimensions(findings),
+        "findings": [item.__dict__ for item in findings],
+    }
+    return json.dumps(payload, indent=2)
+
+
+SERVER_VERSION = "1.1.0"
+
+RESOURCE_FILES = (
+    "taste/principles.yaml",
+    "taste/principles.md",
+    "taste/anti-patterns.yaml",
+    "taste/directions.yaml",
+    "taste/references/index.yaml",
+    "AGENTS.md",
+    "skills/critique-ui/SKILL.md",
+    "tokens/quiet-luxury.DESIGN.md",
+    "tokens/cinematic-dark.DESIGN.md",
+    "tokens/precise-technical.DESIGN.md",
+    "tokens/editorial-print.DESIGN.md",
+)
+
+
+def resource_uri(rel: str) -> str:
+    return f"premium-taste://{rel}"
+
+
+def path_for_resource(uri: str) -> Path:
+    prefix = "premium-taste://"
+    if not str(uri).startswith(prefix):
+        raise ValueError(f"Unknown resource URI: {uri}")
+    rel = str(uri)[len(prefix) :]
+    parts = Path(rel).parts
+    if not rel or rel.startswith("/") or ".." in parts:
+        raise ValueError("Resource path escapes the catalog.")
+    path = (ROOT / rel).resolve()
+    root = ROOT.resolve()
+    if path != root and root not in path.parents:
+        raise ValueError("Resource path escapes the catalog.")
+    if not path.is_file():
+        raise ValueError(f"Resource not found: {uri}")
+    return path
+
+
+PROMPTS = [
+    {
+        "name": "critique-ui",
+        "description": "Critique one screen with Premium Taste and return the revise template.",
+        "arguments": [
+            {"name": "job", "description": "One sentence naming what the user comes to do.", "required": True},
+            {"name": "direction", "description": "Optional direction id.", "required": False},
+            {"name": "reference", "description": "Optional reference id.", "required": False},
+        ],
+    },
+    {
+        "name": "choose-direction",
+        "description": "Pick one direction from the choose block without blending directions.",
+        "arguments": [
+            {"name": "job", "description": "The job of this screen.", "required": True},
+        ],
+    },
+]
+
+
+def prompt_text(name: str, arguments: dict) -> str:
+    job = str(arguments.get("job") or "").strip() or "Name the job of this screen in one sentence."
+    if name == "choose-direction":
+        notes = catalog.parse_direction_notes(
+            (ROOT / "taste" / "directions.yaml").read_text(encoding="utf-8")
+        )
+        choose = "\n".join(f"- {line}" for line in notes.get("choose") or [])
+        return (
+            "Pick exactly one Premium Taste direction. Do not blend directions.\n\n"
+            f"Job: {job}\n\n{choose}\n\n{notes.get('register_note', '')}"
+        ).strip()
+    if name == "critique-ui":
+        direction = str(arguments.get("direction") or "one direction").strip()
+        reference = str(arguments.get("reference") or "one reference").strip()
+        return (
+            "Follow skills/critique-ui/SKILL.md. Cite ids from taste/principles.yaml or taste/anti-patterns.yaml. "
+            "Score only hierarchy, spacing, uniqueness, restraint, accessibility, and product_fit.\n\n"
+            f"Job: {job}\nDirection: {direction}\nReference: {reference}\n"
+        )
+    raise ValueError(f"Unknown prompt: {name}")
 
 
 TOOLS = [
@@ -270,6 +441,17 @@ TOOLS = [
         },
     },
     {
+        "name": "get_pattern",
+        "description": "Read one named failure from taste/anti-patterns.yaml, or search them.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "id": {"type": "string", "description": "Anti-pattern id, such as skeleton.saas-landing."},
+                "query": {"type": "string", "description": "Search id, why, instead, and signals."},
+            },
+        },
+    },
+    {
         "name": "audit_ui",
         "description": "Run the deterministic Premium Taste UI auditor against HTML/CSS/JSX code or a project file path.",
         "inputSchema": {
@@ -281,17 +463,39 @@ TOOLS = [
             },
         },
     },
+    {
+        "name": "verify_url",
+        "description": "Check an http(s) URL. Uses HTTP fallback unless ws_endpoint is set, so a missing browser does not hang.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "http or https URL."},
+                "ws_endpoint": {"type": "string", "description": "Optional existing DevTools WebSocket. Does not launch Chromium."},
+                "allow_fonts": {"type": "array", "items": {"type": "string"}},
+            },
+            "required": ["url"],
+        },
+    },
 ]
 
 TOOL_HANDLERS = {
     "pick_direction": tool_pick_direction,
     "get_reference": tool_get_reference,
+    "get_pattern": tool_get_pattern,
     "get_tokens": tool_get_tokens,
     "audit_ui": tool_audit_ui,
+    "verify_url": tool_verify_url,
 }
 
 
-def read_message(stdin_buf) -> tuple[dict | None, str]:
+def _header_value(raw: bytes) -> tuple[str, str] | None:
+    if b":" not in raw:
+        return None
+    name, value = raw.split(b":", 1)
+    return name.decode("ascii", "replace").strip().lower(), value.strip().decode("ascii", "replace")
+
+
+def read_message(stdin_buf) -> tuple[object, str]:
     """Read one JSON-RPC message using either Content-Length or newline framing."""
     while True:
         line = stdin_buf.readline()
@@ -300,17 +504,28 @@ def read_message(stdin_buf) -> tuple[dict | None, str]:
         stripped = line.strip()
         if not stripped:
             continue
-        if stripped.lower().startswith(b"content-length:"):
-            length = int(stripped.split(b":", 1)[1].strip())
-            while True:
-                hdr = stdin_buf.readline()
-                if not hdr or hdr in (b"\r\n", b"\n"):
-                    break
-            body = stdin_buf.read(length)
-            if not body:
-                return None, "lsp"
-            return json.loads(body.decode("utf-8")), "lsp"
-        return json.loads(stripped.decode("utf-8")), "line"
+        if stripped[:1] in (b"{", b"["):
+            return json.loads(stripped.decode("utf-8")), "line"
+        headers: dict[str, str] = {}
+        first = _header_value(stripped)
+        if first is None:
+            return json.loads(stripped.decode("utf-8")), "line"
+        headers[first[0]] = first[1]
+        while True:
+            hdr = stdin_buf.readline()
+            if not hdr or not hdr.strip():
+                break
+            parsed = _header_value(hdr.strip())
+            if parsed is not None:
+                headers[parsed[0]] = parsed[1]
+        length_text = headers.get("content-length", "")
+        if not length_text.isdigit() or int(length_text) <= 0:
+            raise ValueError("Content-Length must be a positive integer.")
+        length = int(length_text)
+        body = stdin_buf.read(length)
+        if len(body) != length:
+            raise ValueError(f"Expected {length} body bytes, received {len(body)}.")
+        return json.loads(body.decode("utf-8")), "lsp"
 
 
 def write_message(stdout_buf, payload: dict, framing: str) -> None:
@@ -338,8 +553,8 @@ def handle_request(msg: dict, data: dict) -> dict | None:
             "id": req_id,
             "result": {
                 "protocolVersion": client_proto,
-                "capabilities": {"tools": {}},
-                "serverInfo": {"name": "premium-taste", "version": "1.0.0"},
+                "capabilities": {"tools": {}, "resources": {}, "prompts": {}},
+                "serverInfo": {"name": "premium-taste", "version": SERVER_VERSION},
             },
         }
 
@@ -348,6 +563,56 @@ def handle_request(msg: dict, data: dict) -> dict | None:
 
     if method == "tools/list":
         return {"jsonrpc": "2.0", "id": req_id, "result": {"tools": TOOLS}}
+
+    if method == "resources/list":
+        resources = []
+        for rel in RESOURCE_FILES:
+            if (ROOT / rel).is_file():
+                resources.append(
+                    {
+                        "uri": resource_uri(rel),
+                        "name": Path(rel).name,
+                        "mimeType": "text/markdown" if rel.endswith(".md") else "text/yaml",
+                    }
+                )
+        return {"jsonrpc": "2.0", "id": req_id, "result": {"resources": resources}}
+
+    if method == "resources/read":
+        try:
+            path = path_for_resource(str(params.get("uri", "")))
+        except ValueError as exc:
+            return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": str(exc)}}
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {
+                "contents": [
+                    {
+                        "uri": params.get("uri"),
+                        "mimeType": "text/markdown" if path.suffix == ".md" else "text/yaml",
+                        "text": path.read_text(encoding="utf-8"),
+                    }
+                ]
+            },
+        }
+
+    if method == "prompts/list":
+        return {"jsonrpc": "2.0", "id": req_id, "result": {"prompts": PROMPTS}}
+
+    if method == "prompts/get":
+        name = str(params.get("name", ""))
+        try:
+            text = prompt_text(name, params.get("arguments") or {})
+        except ValueError as exc:
+            return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32602, "message": str(exc)}}
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "result": {
+                "description": name,
+                "messages": [{"role": "user", "content": {"type": "text", "text": text}}],
+            },
+        }
 
     if method == "tools/call":
         name = params.get("name", "")
@@ -379,6 +644,10 @@ def handle_request(msg: dict, data: dict) -> dict | None:
     }
 
 
+def _rpc_error(req_id, code: int, message: str) -> dict:
+    return {"jsonrpc": "2.0", "id": req_id, "error": {"code": code, "message": message}}
+
+
 def main() -> int:
     data = load_catalog()
     stdin_buf = sys.stdin.buffer
@@ -386,11 +655,17 @@ def main() -> int:
     while True:
         try:
             msg, framing = read_message(stdin_buf)
+        except json.JSONDecodeError as exc:
+            write_message(stdout_buf, _rpc_error(None, -32700, f"Parse error: {exc}"), "line")
+            continue
         except Exception as exc:  # noqa: BLE001
-            sys.stderr.write(f"premium-taste MCP parse error: {exc}\n")
-            return 1
+            write_message(stdout_buf, _rpc_error(None, -32700, f"Parse error: {exc}"), "line")
+            continue
         if msg is None:
             return 0
+        if not isinstance(msg, dict):
+            write_message(stdout_buf, _rpc_error(None, -32600, "Invalid Request"), framing)
+            continue
         resp = handle_request(msg, data)
         if resp is not None:
             write_message(stdout_buf, resp, framing)

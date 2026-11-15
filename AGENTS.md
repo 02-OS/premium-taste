@@ -12,7 +12,7 @@ Load the smallest set of files that can change the screen in front of you.
 4. Pick **one** direction in `taste/directions.yaml`. Use the `choose` block. If two could fit, pick the job of this screen, not the brand's mood.
 5. Read that direction's entry, then **one** reference from `taste/references/` whose `job` is close to this screen. Get the filename from `taste/references/index.yaml`. Do not read the whole gallery.
 6. Generate from the structural idea in the reference (what the page *is*), not from its palette.
-7. Run `skills/critique-ui.md` on the result. Revise structure before you revise color.
+7. Run `skills/critique-ui/SKILL.md` on the result. Revise structure before you revise color.
 8. If the product has no brand guide, you may apply the sample identity for the direction you chose: `tokens/quiet-luxury.DESIGN.md`, `tokens/cinematic-dark.DESIGN.md`, `tokens/precise-technical.DESIGN.md`, or `tokens/editorial-print.DESIGN.md`. Those files are sample identities, not the system.
 
 When you need the reasoning, read `taste/principles.md`. When you need a pass/fail check, read `taste/principles.yaml` and `taste/anti-patterns.yaml`. Cite rule ids in the critique (`hierarchy.one-primary-action`, `skeleton.saas-landing`).
@@ -71,9 +71,13 @@ Replacing Inter with Newsreader on the same skeleton is not a revision. Change w
 - `taste/anti-patterns.yaml` — named failures with visible signals.
 - `taste/directions.yaml` — how to choose, and the first-screen recipe.
 - `taste/references/index.yaml` — retrieval. Filter on `direction` and `job`.
-- `skills/critique-ui.md` — the revise loop. Output its template.
+- `skills/critique-ui/SKILL.md` — the revise loop. Output its template.
 - `tokens/*.DESIGN.md` — optional example tokens in the Google Labs DESIGN.md format (`version: alpha`).
 - `examples/before-after.md` — a worked critique. Fictional products only.
+
+## MCP
+
+`scripts/mcp_server.py` (version 1.1.0) exposes the catalog over stdio JSON-RPC. Tools: `pick_direction`, `get_reference`, `get_pattern`, `get_tokens`, `audit_ui`, `verify_url`. Resources use `premium-taste://` URIs such as `premium-taste://taste/principles.yaml`. Prompts: `critique-ui` and `choose-direction`.
 
 ## Stack
 

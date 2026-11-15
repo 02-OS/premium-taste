@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import re
+import select
 import shutil
 import socket
 import struct
@@ -60,19 +61,44 @@ EVAL_DOM_JS = r"""
     return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
   };
 
+  const bgMemo = new WeakMap();
   const getEffectiveBg = (el) => {
-    const chain = [];
-    let cur = el;
-    while (cur && cur.nodeType === 1) {
-      chain.push(cur);
-      cur = cur.parentElement;
-    }
-    let bg = [255, 255, 255, 1];
-    for (let i = chain.length - 1; i >= 0; i--) {
-      const c = parseRgba(getComputedStyle(chain[i]).backgroundColor);
-      if (c && c[3] > 0) bg = blend(c, bg);
-    }
+    if (!el || el.nodeType !== 1) return [255, 255, 255, 1];
+    if (bgMemo.has(el)) return bgMemo.get(el);
+    const parentBg = el.parentElement ? getEffectiveBg(el.parentElement) : [255, 255, 255, 1];
+    const c = parseRgba(getComputedStyle(el).backgroundColor);
+    const bg = c && c[3] > 0 ? blend(c, parentBg) : parentBg;
+    bgMemo.set(el, bg);
     return bg;
+  };
+
+  const classBits = (el) => {
+    const raw = el && el.getAttribute ? el.getAttribute("class") : "";
+    return raw ? String(raw).trim().split(/\s+/).filter(Boolean) : [];
+  };
+
+  const shadowHasBlur = (shadow) => {
+    if (!shadow || shadow === "none") return false;
+    const parts = [];
+    let depth = 0;
+    let cur = "";
+    for (const ch of String(shadow)) {
+      if (ch === "(") depth++;
+      else if (ch === ")" && depth) depth--;
+      if (ch === "," && depth === 0) {
+        parts.push(cur);
+        cur = "";
+        continue;
+      }
+      cur += ch;
+    }
+    if (cur.trim()) parts.push(cur);
+    return parts.some((part) => {
+      const text = part.trim();
+      if (/^inset\b/i.test(text)) return false;
+      const lengths = text.match(/-?\d*\.?\d+px/g) || [];
+      return lengths.length >= 3 && parseFloat(lengths[2]) > 0;
+    });
   };
 
   const isVisible = (el) => {
@@ -98,7 +124,8 @@ EVAL_DOM_JS = r"""
   let skippedNegativeCount = 0;
 
   if (document.body) {
-    bodyFontSize = parseFloat(getComputedStyle(document.body).fontSize) || 16;
+    const parsed = parseFloat(getComputedStyle(document.body).fontSize);
+    bodyFontSize = Number.isFinite(parsed) ? parsed : null;
   }
 
   for (const el of document.querySelectorAll('*')) {
@@ -123,9 +150,9 @@ EVAL_DOM_JS = r"""
 
     if (cs.boxShadow && cs.boxShadow !== 'none' && (cs.position === 'static' || cs.position === 'relative')) {
       // Allow subtle inset or 1px focus/border ring shadows without blur; flag blurred elevation shadows
-      const hasBlur = /px\s+[\d.-]+px\s+[1-9]\d*px/.test(cs.boxShadow);
-      if (hasBlur && inFlowShadows.length < 10) {
-        inFlowShadows.push(tag + (el.className ? '.' + String(el.className).trim().split(/\s+/).slice(0, 2).join('.') : ''));
+      if (shadowHasBlur(cs.boxShadow) && inFlowShadows.length < 10) {
+        const bits = classBits(el).slice(0, 2);
+        inFlowShadows.push(tag + (bits.length ? '.' + bits.join('.') : ''));
       }
     }
 
@@ -150,7 +177,7 @@ EVAL_DOM_JS = r"""
         const threshold = (fs >= 24 || (fs >= 18.66 && fw >= 700)) ? 3.0 : 4.5;
         if (r < threshold && contrastFailures.length < 15) {
           contrastFailures.push({
-            element: tag + (el.className ? '.' + String(el.className).trim().split(/\s+/)[0] : ''),
+            element: tag + (classBits(el)[0] ? '.' + classBits(el)[0] : ''),
             text: el.textContent.trim().slice(0, 40),
             ratio: Number(r.toFixed(2)),
             threshold,
@@ -323,7 +350,7 @@ class CdpClient:
             mask = self._read_exact(4) if masked else b""
             payload = self._read_exact(length)
             if masked:
-                payload = bytes(b ^ mask[i % 4] for i, b in enumerate(payload))
+                payload = _unmask_payload(payload, mask)
 
             if opcode == 0x8:
                 raise EOFError("WebSocket close frame received")
@@ -354,21 +381,76 @@ class CdpClient:
                 seen_event = True
         return result
 
+    def wait_for_event(self, event: str) -> dict:
+        while True:
+            raw = self._recv_message()
+            data = json.loads(raw)
+            if data.get("method") == event:
+                return data
+
+
+def _unmask_payload(payload: bytes, mask: bytes) -> bytes:
+    if not payload:
+        return payload
+    key = int.from_bytes(mask, "little")
+    padded_len = (len(payload) + 3) & ~3
+    padded = payload.ljust(padded_len, b"\x00")
+    out = bytearray()
+    for index in range(0, padded_len, 4):
+        word = int.from_bytes(padded[index : index + 4], "little") ^ key
+        out.extend(word.to_bytes(4, "little"))
+    return bytes(out[: len(payload)])
+
 
 def wait_for_cdp_port(proc: subprocess.Popen[str], timeout: float = 10.0) -> int:
     deadline = time.monotonic() + timeout
     assert proc.stderr is not None
+    fd = proc.stderr.fileno()
+    os.set_blocking(fd, False)
+    buf = ""
     while time.monotonic() < deadline:
-        line = proc.stderr.readline()
-        if not line:
-            if proc.poll() is not None:
-                raise RuntimeError(f"Chromium exited early with code {proc.returncode}")
-            time.sleep(0.05)
+        ready, _, _ = select.select([fd], [], [], 0.1)
+        if proc.poll() is not None and not ready:
+            raise RuntimeError(f"Chromium exited early with code {proc.returncode}")
+        if not ready:
             continue
-        m = re.search(r"ws://127\.0\.0\.1:(\d+)/", line)
-        if m:
-            return int(m.group(1))
+        try:
+            chunk = proc.stderr.read()
+        except BlockingIOError:
+            continue
+        if not chunk:
+            continue
+        buf += chunk
+        while "\n" in buf:
+            line, buf = buf.split("\n", 1)
+            match = re.search(r"ws://127\.0\.0\.1:(\d+)/", line)
+            if match:
+                return int(match.group(1))
     raise TimeoutError("Timed out waiting for Chromium DevTools WebSocket port")
+
+
+def evaluate_value(response: dict) -> object:
+    if not isinstance(response, dict):
+        raise RuntimeError("CDP evaluate returned no result")
+    details = response.get("exceptionDetails")
+    if details:
+        if isinstance(details, dict):
+            text = details.get("text") or details.get("exception", {}).get("description") or "JavaScript exception"
+        else:
+            text = str(details)
+        raise RuntimeError(f"CDP evaluate failed: {text}")
+    result = response.get("result")
+    if not isinstance(result, dict) or "value" not in result:
+        raise RuntimeError("CDP evaluate returned no value")
+    return result["value"]
+
+
+def navigate_and_wait(client: CdpClient, url: str) -> None:
+    nav = client.call("Page.navigate", {"url": url})
+    error_text = nav.get("errorText") if isinstance(nav, dict) else None
+    if error_text:
+        raise RuntimeError(f"Page.navigate failed: {error_text}")
+    client.wait_for_event("Page.loadEventFired")
 
 
 def inspect_with_chromium(url: str, chrome_bin: str, desktop_w: int, mobile_w: int) -> dict:
@@ -405,7 +487,7 @@ def inspect_with_chromium(url: str, chrome_bin: str, desktop_w: int, mobile_w: i
                 "Emulation.setDeviceMetricsOverride",
                 {"width": desktop_w, "height": 800, "deviceScaleFactor": 1, "mobile": False},
             )
-            client.call("Page.navigate", {"url": url}, wait_event="Page.loadEventFired")
+            navigate_and_wait(client, url)
 
             # Wait briefly for webfonts and layout settle
             client.call(
@@ -419,7 +501,7 @@ def inspect_with_chromium(url: str, chrome_bin: str, desktop_w: int, mobile_w: i
                 "Runtime.evaluate",
                 {"expression": EVAL_DOM_JS, "returnByValue": True},
             )
-            desktop = desktop_res["result"]["value"]
+            desktop = evaluate_value(desktop_res)
             desktop["targetWidth"] = desktop_w
 
             client.call(
@@ -430,12 +512,14 @@ def inspect_with_chromium(url: str, chrome_bin: str, desktop_w: int, mobile_w: i
                 "Runtime.evaluate",
                 {"expression": EVAL_DOM_JS, "returnByValue": True},
             )
-            mobile = mobile_res["result"]["value"]
+            mobile = evaluate_value(mobile_res)
             mobile["targetWidth"] = mobile_w
             return {"mode": "chromium-cdp", "chrome": chrome_bin, "desktop": desktop, "mobile": mobile}
         finally:
             if client is not None:
                 client.close()
+            if proc.stderr is not None:
+                proc.stderr.close()
             proc.terminate()
             try:
                 proc.wait(timeout=3)
@@ -443,21 +527,73 @@ def inspect_with_chromium(url: str, chrome_bin: str, desktop_w: int, mobile_w: i
                 proc.kill()
 
 
+def inspect_with_websocket(ws_url: str, url: str, desktop_w: int, mobile_w: int) -> dict:
+    """Attach to a DevTools socket that is already open. Does not launch Chromium."""
+    client = CdpClient(ws_url, timeout=15.0)
+    try:
+        client.call("Page.enable")
+        client.call("Runtime.enable")
+        client.call(
+            "Emulation.setDeviceMetricsOverride",
+            {"width": desktop_w, "height": 800, "deviceScaleFactor": 1, "mobile": False},
+        )
+        navigate_and_wait(client, url)
+        desktop = evaluate_value(
+            client.call("Runtime.evaluate", {"expression": EVAL_DOM_JS, "returnByValue": True})
+        )
+        desktop["targetWidth"] = desktop_w
+        client.call(
+            "Emulation.setDeviceMetricsOverride",
+            {"width": mobile_w, "height": 812, "deviceScaleFactor": 2, "mobile": True},
+        )
+        mobile = evaluate_value(
+            client.call("Runtime.evaluate", {"expression": EVAL_DOM_JS, "returnByValue": True})
+        )
+        mobile["targetWidth"] = mobile_w
+        return {"mode": "chromium-cdp", "chrome": ws_url, "desktop": desktop, "mobile": mobile}
+    finally:
+        client.close()
+
+
+MAX_HTTP_BYTES = 2_000_000
+
+
+def assert_http_url(url: str) -> None:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        raise ValueError(f"Only http and https URLs can be fetched, not {parsed.scheme or 'an empty scheme'}.")
+    if parsed.path.startswith("//") or "\\" in parsed.path:
+        raise ValueError("Refusing a URL path that leaves the host.")
+
+
+def _read_limited(response, limit: int = MAX_HTTP_BYTES) -> str:
+    data = response.read(limit + 1)
+    if len(data) > limit:
+        data = data[:limit]
+    return data.decode("utf-8", errors="replace")
+
+
 def inspect_http_fallback(url: str, allow_fonts: set[str]) -> tuple[dict, list[audit.Finding]]:
-    with urllib.request.urlopen(url, timeout=10) as resp:
-        html = resp.read().decode("utf-8", errors="replace")
+    assert_http_url(url)
+    try:
+        with urllib.request.urlopen(url, timeout=10) as resp:
+            html = _read_limited(resp)
+    except (urllib.error.URLError, urllib.error.HTTPError) as exc:
+        return {"mode": "http-static-fallback", "url": url, "error": str(exc)}, []
     findings = audit.audit_text(html, url, allow_fonts=allow_fonts)
+    page = urllib.parse.urlparse(url)
     for href in re.findall(r'<link[^>]+rel=["\']stylesheet["\'][^>]+href=["\']([^"\']+)["\']', html, re.I):
         css_url = urllib.parse.urljoin(url, href)
-        if urllib.parse.urlparse(css_url).netloc == urllib.parse.urlparse(url).netloc:
-            try:
-                with urllib.request.urlopen(css_url, timeout=10) as css_resp:
-                    css = css_resp.read().decode("utf-8", errors="replace")
-                findings.extend(audit.audit_text(css, css_url, allow_fonts=allow_fonts))
-            except urllib.error.URLError:
-                pass
-    meta = {"mode": "http-static-fallback", "url": url}
-    return meta, findings
+        css_parts = urllib.parse.urlparse(css_url)
+        if css_parts.scheme not in {"http", "https"} or css_parts.netloc != page.netloc:
+            continue
+        try:
+            with urllib.request.urlopen(css_url, timeout=10) as css_resp:
+                css = _read_limited(css_resp)
+            findings.extend(audit.audit_text(css, css_url, allow_fonts=allow_fonts))
+        except (urllib.error.URLError, urllib.error.HTTPError):
+            continue
+    return {"mode": "http-static-fallback", "url": url}, findings
 
 
 def dom_metrics_to_findings(
@@ -466,37 +602,41 @@ def dom_metrics_to_findings(
     mobile: dict,
     allow_fonts: set[str],
 ) -> list[audit.Finding]:
+    desktop = desktop or {}
+    mobile = mobile or {}
     findings: list[audit.Finding] = []
+    viewports = (("desktop", desktop), ("mobile", mobile))
 
-    if desktop.get("h1Count", 1) != 1:
-        findings.append(
-            audit.Finding(
-                url,
-                0,
-                "hierarchy.single-h1",
-                "hierarchy",
-                "error",
-                f"Rendered page has {desktop.get('h1Count', 0)} visible <h1> elements (expected 1).",
-                "Render exactly one <h1> defining the main job of the screen.",
+    for viewport_label, data in viewports:
+        if data.get("h1Count", 1) != 1:
+            findings.append(
+                audit.Finding(
+                    url,
+                    0,
+                    "hierarchy.one-job",
+                    "hierarchy",
+                    "error",
+                    f"{viewport_label} rendered page has {data.get('h1Count', 0)} visible <h1> elements (expected 1).",
+                    "Render exactly one <h1> defining the main job of the screen.",
+                )
             )
-        )
 
-    cta_count = len(desktop.get("firstFoldButtons", []))
-    if cta_count > 1:
-        names = ", ".join(desktop["firstFoldButtons"][:4])
-        findings.append(
-            audit.Finding(
-                url,
-                0,
-                "hierarchy.one-primary-action",
-                "hierarchy",
-                "warn",
-                f"{cta_count} high-contrast filled buttons visible in the first 700px ({names}).",
-                "Keep one filled primary CTA; convert supporting actions to outlined buttons or text links.",
+        cta_count = len(data.get("firstFoldButtons") or [])
+        if cta_count > 1:
+            names = ", ".join((data.get("firstFoldButtons") or [])[:4])
+            findings.append(
+                audit.Finding(
+                    url,
+                    0,
+                    "hierarchy.one-primary-action",
+                    "hierarchy",
+                    "warn",
+                    f"{viewport_label}: {cta_count} high-contrast filled buttons visible in the first 700px ({names}).",
+                    "Keep one filled primary CTA; convert supporting actions to outlined buttons or text links.",
+                )
             )
-        )
 
-    for viewport_label, data in (("desktop", desktop), ("mobile", mobile)):
+    for viewport_label, data in viewports:
         target_w = data.get("targetWidth", data.get("innerWidth", 0))
         effective_w = max(data.get("scrollWidth", 0), data.get("innerWidth", 0))
         if data.get("overflowX") or effective_w > target_w + 1:
@@ -504,134 +644,131 @@ def dom_metrics_to_findings(
                 audit.Finding(
                     url,
                     0,
-                    "a11y.overflow-x",
-                    "accessibility",
+                    "spacing.full-bleed",
+                    "spacing",
                     "error",
                     f"Horizontal overflow at {viewport_label} width ({effective_w}px > {target_w}px).",
                     "Constrain children with minmax(0, 1fr), max-width: 100%, or scrollable wrappers.",
                 )
             )
 
-    fonts = desktop.get("fonts", [])
     costume_lower = {f.lower() for f in audit.COSTUME_FONTS}
-    for f in fonts:
-        if f.lower() in costume_lower and f.lower() not in allow_fonts:
+    generic = {g.lower() for g in audit.GENERIC_FONT_TOKENS} | {"times new roman", "times", "courier new"}
+    for viewport_label, data in viewports:
+        fonts = data.get("fonts") or []
+        for face in fonts:
+            if face.lower() in costume_lower and face.lower() not in allow_fonts:
+                findings.append(
+                    audit.Finding(
+                        url,
+                        0,
+                        "type.avoid-tells",
+                        "uniqueness",
+                        "error",
+                        f"{viewport_label} rendered page uses costume typeface '{face}'.",
+                        "Switch to system-ui or IBM Plex / Public Sans / Newsreader / Source Serif 4.",
+                    )
+                )
+        custom_fonts = [face for face in fonts if face.lower() not in generic]
+        if len(custom_fonts) > 2:
             findings.append(
                 audit.Finding(
                     url,
                     0,
-                    "type.avoid-tells",
-                    "uniqueness",
+                    "type.two-families",
+                    "restraint",
                     "error",
-                    f"Rendered page uses costume typeface '{f}'.",
-                    "Switch to system-ui or IBM Plex / Public Sans / Newsreader / Source Serif 4.",
+                    f"{viewport_label}: {len(custom_fonts)} webfont/named families rendered ({', '.join(custom_fonts[:4])}). Max is 2.",
+                    "Consolidate to at most two families (plus monospace only when code/telemetry needs it).",
                 )
             )
-
-    generic = {g.lower() for g in audit.GENERIC_FONT_TOKENS} | {"times new roman", "times", "courier new"}
-    custom_fonts = [f for f in fonts if f.lower() not in generic]
-    if len(custom_fonts) > 2:
-        findings.append(
-            audit.Finding(
-                url,
-                0,
-                "type.two-family-cap",
-                "restraint",
-                "error",
-                f"{len(custom_fonts)} webfont/named families rendered ({', '.join(custom_fonts[:4])}). Max is 2.",
-                "Consolidate to at most two families (plus monospace only when code/telemetry needs it).",
+        raw_body = data.get("bodyFontSize") if "bodyFontSize" in data else None
+        if isinstance(raw_body, (int, float)) and not isinstance(raw_body, bool) and float(raw_body) < 14:
+            findings.append(
+                audit.Finding(
+                    url,
+                    0,
+                    "a11y.size",
+                    "accessibility",
+                    "error",
+                    f"Computed <body> font size at {viewport_label} is {float(raw_body):.1f}px (minimum 14px).",
+                    "Raise root body text to 15–17px (0.9375–1.0625rem).",
+                )
             )
-        )
-
-    body_px = desktop.get("bodyFontSize") or 16
-    if body_px < 14:
-        findings.append(
-            audit.Finding(
-                url,
-                0,
-                "type.body-floor",
-                "accessibility",
-                "error",
-                f"Computed <body> font size is {body_px:.1f}px (minimum 14px).",
-                "Raise root body text to 15–17px (0.9375–1.0625rem).",
+        radii = data.get("radii") or []
+        if len(radii) > 3:
+            findings.append(
+                audit.Finding(
+                    url,
+                    0,
+                    "material.radius",
+                    "restraint",
+                    "warn",
+                    f"{viewport_label}: {len(radii)} distinct border-radius values rendered ({', '.join(radii[:5])}). Cap at 3.",
+                    "Standardize onto one architectural radius token across controls and containers.",
+                )
             )
-        )
-
-    radii = desktop.get("radii", [])
-    if len(radii) > 3:
-        findings.append(
-            audit.Finding(
-                url,
-                0,
-                "material.radius-system",
-                "restraint",
-                "warn",
-                f"{len(radii)} distinct border-radius values rendered ({', '.join(radii[:5])}). Cap at 3.",
-                "Standardize onto one architectural radius token across controls and containers.",
+        shadows = data.get("inFlowShadows") or []
+        if shadows:
+            findings.append(
+                audit.Finding(
+                    url,
+                    0,
+                    "material.shadow-budget",
+                    "restraint",
+                    "warn",
+                    f"{viewport_label}: blurred elevation shadow detected on in-flow element(s): {', '.join(shadows[:4])}.",
+                    "Use 1px hairline borders or step in surface tone; keep shadows for overlays only.",
+                )
             )
-        )
-
-    shadows = desktop.get("inFlowShadows", [])
-    if shadows:
-        findings.append(
-            audit.Finding(
-                url,
-                0,
-                "material.shadow-budget",
-                "restraint",
-                "warn",
-                f"Blurred elevation shadow detected on in-flow element(s): {', '.join(shadows[:4])}.",
-                "Use 1px hairline borders or step in surface tone; keep shadows for overlays only.",
+        for cf in data.get("contrastFailures") or []:
+            findings.append(
+                audit.Finding(
+                    url,
+                    0,
+                    "color.contrast",
+                    "accessibility",
+                    "error",
+                    f"{viewport_label}: low computed contrast {cf['ratio']}:1 (< {cf['threshold']}:1) on {cf['element']} ({cf['text']!r}).",
+                    "Darken text or adjust surface tone so normal text reaches >= 4.5:1 and large text >= 3.0:1.",
+                )
             )
-        )
-
-    for cf in desktop.get("contrastFailures", []):
-        findings.append(
-            audit.Finding(
-                url,
-                0,
-                "color.contrast-floor",
-                "accessibility",
-                "error",
-                f"Low computed contrast {cf['ratio']}:1 (< {cf['threshold']}:1) on {cf['element']} ({cf['text']!r}).",
-                "Darken text or adjust surface tone so normal text reaches >= 4.5:1 and large text >= 3.0:1.",
+        for st in data.get("smallTargets") or []:
+            findings.append(
+                audit.Finding(
+                    url,
+                    0,
+                    "a11y.targets",
+                    "accessibility",
+                    "warn",
+                    f"{viewport_label}: interactive <{st['element']}> '{st['text']}' is {st['size']}px (< 24x24px minimum).",
+                    "Expand padding or min-width/min-height so click/tap targets are at least 24x24px.",
+                )
             )
-        )
-
-    for st in desktop.get("smallTargets", []):
-        findings.append(
-            audit.Finding(
-                url,
-                0,
-                "a11y.target-size",
-                "accessibility",
-                "warn",
-                f"Interactive <{st['element']}> '{st['text']}' is {st['size']}px (< 24x24px minimum).",
-                "Expand padding or min-width/min-height so click/tap targets are at least 24x24px.",
+        for uc in data.get("unlabeledControls") or []:
+            findings.append(
+                audit.Finding(
+                    url,
+                    0,
+                    "a11y.placeholder-label",
+                    "accessibility",
+                    "error",
+                    f"{viewport_label}: rendered <{uc['element']}> ({uc['name']}) lacks a visible <label> or aria-label.",
+                    "Associate an explicit <label for=...> element with every input control.",
+                )
             )
-        )
-
-    for uc in desktop.get("unlabeledControls", []):
-        findings.append(
-            audit.Finding(
-                url,
-                0,
-                "a11y.placeholder-label",
-                "accessibility",
-                "error",
-                f"Rendered <{uc['element']}> ({uc['name']}) lacks a visible <label> or aria-label.",
-                "Associate an explicit <label for=...> element with every input control.",
-            )
-        )
 
     return findings
 
 
-def main(argv: list[str]) -> int:
+def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
     parser = argparse.ArgumentParser(description="Critique a live URL against Premium Taste rules.")
-    parser.add_argument("url", help="Target HTTP(S) or file:// URL to inspect.")
+    parser.add_argument("url", help="Target HTTP(S) URL to inspect.")
     parser.add_argument("--format", choices=("text", "json"), default="text")
     parser.add_argument("--chrome-path", help="Explicit path to Chrome/Chromium binary.")
+    parser.add_argument("--ws-endpoint", help="Attach to an existing DevTools WebSocket instead of launching Chromium.")
     parser.add_argument("--no-browser", action="store_true", help="Force HTTP static fallback instead of headless Chromium.")
     parser.add_argument("--desktop-width", type=int, default=1280)
     parser.add_argument("--mobile-width", type=int, default=375)
@@ -640,13 +777,17 @@ def main(argv: list[str]) -> int:
     args = parser.parse_args(argv)
 
     allow_fonts = {f.strip().lower() for f in args.allow_font if f.strip()}
-    chrome_bin = None if args.no_browser else find_chromium_binary(args.chrome_path)
-
-    if chrome_bin:
-        report_meta = inspect_with_chromium(args.url, chrome_bin, args.desktop_width, args.mobile_width)
+    assert_http_url(args.url)
+    if args.ws_endpoint:
+        report_meta = inspect_with_websocket(args.ws_endpoint, args.url, args.desktop_width, args.mobile_width)
         findings = dom_metrics_to_findings(args.url, report_meta["desktop"], report_meta["mobile"], allow_fonts)
     else:
-        report_meta, findings = inspect_http_fallback(args.url, allow_fonts)
+        chrome_bin = None if args.no_browser else find_chromium_binary(args.chrome_path)
+        if chrome_bin:
+            report_meta = inspect_with_chromium(args.url, chrome_bin, args.desktop_width, args.mobile_width)
+            findings = dom_metrics_to_findings(args.url, report_meta["desktop"], report_meta["mobile"], allow_fonts)
+        else:
+            report_meta, findings = inspect_http_fallback(args.url, allow_fonts)
 
     scores = audit.score_dimensions(findings)
     if args.format == "json":
@@ -656,7 +797,7 @@ def main(argv: list[str]) -> int:
             "meta": report_meta,
             "scores": scores,
             "findings": [f.__dict__ for f in findings],
-            "passed": not any(f.severity == "error" for f in findings),
+            "passed": len(findings) == 0,
         }
         print(json.dumps(payload, indent=2))
     else:
@@ -668,10 +809,12 @@ def main(argv: list[str]) -> int:
                 f"  Desktop {d['innerWidth']}px (scroll {d['scrollWidth']}px) · "
                 f"Mobile {m['innerWidth']}px (scroll {m['scrollWidth']}px)"
             )
+            body_px = d.get("bodyFontSize")
+            body_label = f"{body_px:.1f}px" if isinstance(body_px, (int, float)) and not isinstance(body_px, bool) else "unknown"
             print(
-                f"  Fonts: {', '.join(d['fonts']) or 'default'} | "
-                f"Body: {d['bodyFontSize']:.1f}px | H1s: {d['h1Count']} | "
-                f"Radii: {len(d['radii'])} | First-fold filled CTAs: {len(d['firstFoldButtons'])}"
+                f"  Fonts: {', '.join(d.get('fonts') or []) or 'default'} | "
+                f"Body: {body_label} | H1s: {d.get('h1Count', 0)} | "
+                f"Radii: {len(d.get('radii') or [])} | First-fold filled CTAs: {len(d.get('firstFoldButtons') or [])}"
             )
             if d.get("skippedNegativeCount"):
                 print(f"  Note: skipped {d['skippedNegativeCount']} elements inside [data-taste-specimen=\"negative\"]")

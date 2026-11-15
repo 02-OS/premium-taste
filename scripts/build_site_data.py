@@ -40,9 +40,6 @@ def parse_directions(text: str) -> list[dict]:
         folded_lines = []
 
     for line in text.splitlines():
-        if line.strip() == "choose:":
-            flush_folded()
-            break
         if line.startswith("  - id: "):
             flush_folded()
             cur = {"id": line.split(":", 1)[1].strip()}
@@ -76,6 +73,59 @@ def parse_directions(text: str) -> list[dict]:
                 cur[key] = strip_quotes(rest)
     flush_folded()
     return items
+
+
+def parse_direction_notes(text: str) -> dict:
+    choose: list[str] = []
+    register: list[str] = []
+    mode: str | None = None
+    for line in text.splitlines():
+        if line.strip() == "choose:":
+            mode = "choose"
+            continue
+        if line.startswith("register_note:"):
+            mode = "register"
+            rest = line.split(":", 1)[1].strip()
+            register = [] if rest in {">", "|", ""} else [strip_quotes(rest)]
+            if rest not in {">", "|", ""}:
+                mode = None
+            continue
+        if mode == "choose" and line.startswith("  - "):
+            choose.append(strip_quotes(line[4:].strip()))
+            continue
+        if mode == "register":
+            if not line.strip():
+                continue
+            if line.startswith("  "):
+                register.append(line.strip())
+                continue
+            mode = None
+    return {"choose": choose, "register_note": " ".join(register).strip()}
+
+
+def parse_simple_yaml(text: str) -> dict:
+    root: dict = {}
+    stack: list[tuple[int, dict]] = [(-1, root)]
+    for raw in text.splitlines():
+        if not raw.strip() or raw.strip().startswith("#"):
+            continue
+        indent = len(raw) - len(raw.lstrip(" "))
+        line = raw.strip()
+        while len(stack) > 1 and indent <= stack[-1][0]:
+            stack.pop()
+        parent = stack[-1][1]
+        if ":" not in line or line.startswith("- "):
+            continue
+        key, rest = line.split(":", 1)
+        key = key.strip()
+        rest = rest.strip()
+        if rest in {"", ">", "|"}:
+            node: dict = {}
+            parent[key] = node
+            stack.append((indent, node))
+        else:
+            parent[key] = strip_quotes(rest)
+    return root
 
 
 def parse_anti_patterns(text: str) -> list[dict]:
@@ -150,6 +200,12 @@ def parse_reference(path: Path) -> dict:
     }
 
 
+def parse_design_frontmatter(text: str) -> dict:
+    end = text.find("\n---", 3)
+    matter = text[3:end] if text.startswith("---") and end != -1 else ""
+    return parse_simple_yaml(matter)
+
+
 def parse_tokens() -> dict[str, dict]:
     mapping = {
         "quiet-luxury": "quiet-luxury.DESIGN.md",
@@ -160,43 +216,98 @@ def parse_tokens() -> dict[str, dict]:
     out: dict[str, dict] = {}
     for direction_id, filename in mapping.items():
         text = (ROOT / "tokens" / filename).read_text(encoding="utf-8")
-        end = text.find("\n---", 3)
-        matter = text[3:end] if text.startswith("---") and end != -1 else ""
-        name_m = re.search(r"^name:\s*(.+)$", matter, re.M)
-        colors_m = re.search(r"^colors:\n((?:  [a-z-]+:\s*.+\n)+)", matter, re.M)
-        colors: dict[str, str] = {}
-        if colors_m:
-            for ln in colors_m.group(1).strip().splitlines():
-                k, v = ln.strip().split(":", 1)
-                colors[k.strip()] = strip_quotes(v)
-        out[direction_id] = {
-            "name": strip_quotes(name_m.group(1)) if name_m else direction_id,
+        parsed = parse_design_frontmatter(text)
+        colors = parsed.get("colors") if isinstance(parsed.get("colors"), dict) else {}
+        typography = parsed.get("typography") if isinstance(parsed.get("typography"), dict) else {}
+        rounded = parsed.get("rounded") if isinstance(parsed.get("rounded"), dict) else {}
+        spacing = parsed.get("spacing") if isinstance(parsed.get("spacing"), dict) else {}
+        imagery = parsed.get("imagery") if isinstance(parsed.get("imagery"), dict) else {}
+        surface_rows = [
+            {"role": key, "hex": value}
+            for key, value in colors.items()
+            if str(key).startswith("surface")
+        ]
+        pack = {
+            "name": parsed.get("name") or direction_id,
             "file": f"tokens/{filename}",
             "colors": colors,
+            "typography": typography,
+            "rounded": rounded,
+            "spacing": spacing,
+            "surfaceRows": surface_rows,
         }
+        if imagery:
+            pack["imagery"] = imagery
+        out[direction_id] = pack
     return out
 
 
-def main() -> int:
-    directions = parse_directions(
-        (ROOT / "taste" / "directions.yaml").read_text(encoding="utf-8")
-    )
+def render_dtcg(pack: dict) -> dict:
+    color = {
+        key: {"$type": "color", "$value": value}
+        for key, value in (pack.get("colors") or {}).items()
+    }
+    typography = {}
+    for role, spec in (pack.get("typography") or {}).items():
+        if isinstance(spec, dict):
+            typography[role] = {"$type": "typography", "$value": dict(spec)}
+    return {
+        "color": color,
+        "typography": typography,
+        "spacing": {
+            key: {"$type": "dimension", "$value": value}
+            for key, value in (pack.get("spacing") or {}).items()
+        },
+        "radius": {
+            key: {"$type": "dimension", "$value": value}
+            for key, value in (pack.get("rounded") or {}).items()
+        },
+    }
+
+
+def render_design_md(pack: dict) -> str:
+    lines = ["---", f"name: {pack.get('name', '')}", "colors:"]
+    for key, value in (pack.get("colors") or {}).items():
+        lines.append(f"  {key}: \"{value}\"")
+    if pack.get("typography"):
+        lines.append("typography:")
+        for role, spec in pack["typography"].items():
+            lines.append(f"  {role}:")
+            if isinstance(spec, dict):
+                for field, value in spec.items():
+                    lines.append(f"    {field}: {value}")
+    if pack.get("rounded"):
+        lines.append("rounded:")
+        for key, value in pack["rounded"].items():
+            lines.append(f"  {key}: {value}")
+    if pack.get("spacing"):
+        lines.append("spacing:")
+        for key, value in pack["spacing"].items():
+            lines.append(f"  {key}: {value}")
+    if pack.get("imagery"):
+        lines.append("imagery:")
+        for key, value in pack["imagery"].items():
+            lines.append(f"  {key}: {value}")
+    lines.append("---")
+    return "\n".join(lines) + "\n"
+
+
+def build_payload() -> dict:
+    direction_text = (ROOT / "taste" / "directions.yaml").read_text(encoding="utf-8")
+    directions = parse_directions(direction_text)
+    notes = parse_direction_notes(direction_text)
     anti_patterns = parse_anti_patterns(
         (ROOT / "taste" / "anti-patterns.yaml").read_text(encoding="utf-8")
     )
     principles_text = (ROOT / "taste" / "principles.yaml").read_text(encoding="utf-8")
     principle_count = len(re.findall(r"^\s*- id:\s*", principles_text, re.M))
-
     index_text = (ROOT / "taste" / "references" / "index.yaml").read_text(encoding="utf-8")
     ref_ids = re.findall(r"^\s+- id:\s*([a-z0-9-]+)\s*$", index_text, re.M)
     references = [
         parse_reference(ROOT / "taste" / "references" / f"{ref_id}.md")
         for ref_id in ref_ids
     ]
-
-    tokens = parse_tokens()
-
-    payload = {
+    return {
         "counts": {
             "principles": principle_count,
             "antiPatterns": len(anti_patterns),
@@ -204,21 +315,44 @@ def main() -> int:
             "directions": len(directions),
         },
         "directions": directions,
+        "choose": notes["choose"],
+        "registerNote": notes["register_note"],
         "references": references,
         "antiPatterns": anti_patterns,
-        "tokens": tokens,
+        "tokens": parse_tokens(),
     }
 
-    out_path = ROOT / "site" / "data.js"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+def render_data_js(payload: dict | None = None) -> str:
+    data = payload if payload is not None else build_payload()
     header = "// Generated from taste/ and tokens/ by scripts/build_site_data.py.\n"
-    out_path.write_text(
-        f"{header}window.PREMIUM_TASTE_DATA = {json.dumps(payload, indent=2, ensure_ascii=False)};\n",
-        encoding="utf-8",
-    )
+    return f"{header}window.PREMIUM_TASTE_DATA = {json.dumps(data, indent=2, ensure_ascii=False)};\n"
+
+
+def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    check = "--check" in argv
+    payload = build_payload()
+    rendered = render_data_js(payload)
+    out_path = ROOT / "site" / "data.js"
+    counts = payload["counts"]
+    if check:
+        current = out_path.read_text(encoding="utf-8") if out_path.exists() else ""
+        if current != rendered:
+            print("site/data.js is stale. Run python3 scripts/build_site_data.py", file=sys.stderr)
+            return 1
+        print(
+            "site/data.js is fresh "
+            f"({counts['principles']} principles, {counts['antiPatterns']} anti-patterns, "
+            f"{counts['references']} references, {counts['directions']} directions)"
+        )
+        return 0
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(rendered, encoding="utf-8")
     print(
-        f"wrote {out_path} ({principle_count} principles, {len(anti_patterns)} anti-patterns, "
-        f"{len(references)} references, {len(directions)} directions)"
+        f"wrote {out_path} ({counts['principles']} principles, {counts['antiPatterns']} anti-patterns, "
+        f"{counts['references']} references, {counts['directions']} directions)"
     )
     return 0
 

@@ -13,7 +13,7 @@ Agents that follow it should make interfaces that are specific to the product in
 ```text
 Read AGENTS.md at https://github.com/02-OS/premium-taste and follow its load order.
 Pick one direction and one reference for this screen, refuse generic SaaS skeletons,
-then run skills/critique-ui.md and fix structure before color.
+then run skills/critique-ui/SKILL.md and fix structure before color.
 
 Job of this screen: [one sentence with a verb]
 ```
@@ -37,7 +37,15 @@ python3 scripts/audit.py src/                         # static rules on HTML/CSS
 python3 scripts/critique_url.py http://localhost:4173/ # live Chromium contrast & layout check
 ```
 
-That copies the judgment files into `.premium-taste/` inside your project and writes a lightweight pointer for Claude Code (`.claude/skills/critique-ui/SKILL.md`), Cursor (`.cursor/rules/premium-taste.mdc`), or Codex/agents (`.agents/skills/premium-taste/SKILL.md` and `AGENTS.md`). Pass `--agent all` or `--dry-run` to customize.
+That copies the judgment files into `.premium-taste/` inside your project and writes a lightweight pointer for Claude Code (`.claude/skills/critique-ui/SKILL.md`), Cursor (`.cursor/rules/premium-taste.mdc`), Codex (`.codex/skills/critique-ui/SKILL.md`), Gemini (`.gemini/extensions/premium-taste/gemini-extension.json`), or other agents (`.agents/skills/premium-taste/SKILL.md` and `AGENTS.md`). `--agent all` includes claude, cursor, agents, codex, and gemini. Flags may come before the target path. Pass `--dry-run` to preview.
+
+## MCP
+
+`python3 scripts/mcp_server.py` is a stdlib JSON-RPC 2.0 server on stdio. It accepts newline JSON and Content-Length framing. Server version 1.1.0.
+
+Tools: `pick_direction`, `get_reference`, `get_pattern`, `get_tokens`, `audit_ui`, `verify_url`.
+
+Resources use a `premium-taste://` URI plus a path in this repo, for example `premium-taste://taste/principles.yaml`. Prompts: `critique-ui` and `choose-direction`.
 
 ## How an agent should use it
 
@@ -47,7 +55,7 @@ Start at [AGENTS.md](AGENTS.md). The short version:
 2. Pick one direction in [taste/directions.yaml](taste/directions.yaml).
 3. Load one reference from [taste/references/index.yaml](taste/references/index.yaml). Steal a structure, not a palette.
 4. Generate.
-5. Run [skills/critique-ui.md](skills/critique-ui.md). Change the structure before the colors.
+5. Run [skills/critique-ui/SKILL.md](skills/critique-ui/SKILL.md). Change the structure before the colors.
 
 Claude Code also reads [CLAUDE.md](CLAUDE.md), which points here. Other agents (Cursor, Codex, Grok, and the rest) can be pointed at `AGENTS.md` and the skill file. Do not paste the principles into a host rule file. Link them, so a rule has one home.
 
@@ -74,14 +82,14 @@ taste/principles.yaml     the same ids, as checks
 taste/anti-patterns.yaml  named cheap and generic patterns
 taste/directions.yaml     how to choose a direction
 taste/references/         annotated gallery and an index
-skills/critique-ui.md     generate → critique → revise
+skills/critique-ui/SKILL.md  generate → critique → revise
 tokens/                   four example DESIGN.md identities
 examples/                 a negative specimen, two afters, prompts
-site/                      interactive workbench, live auditor, token contrast studio, and catalog explorer
-install.sh                 zero-clone installer supporting --agent and --mcp
-scripts/audit.py           deterministic static UI rule checker (HTML, CSS, JSX, TSX, Vue, Svelte)
-scripts/critique_url.py    live Chromium CDP / HTTP fallback URL critique (contrast, fonts, overflow)
-scripts/mcp_server.py      stdlib JSON-RPC 2.0 MCP server (pick_direction, get_reference, get_tokens, audit_ui)
+site/                     interactive workbench, live auditor, token contrast studio, and catalog explorer
+install.sh                zero-clone installer; flags may precede the target
+scripts/audit.py          deterministic static UI rule checker (HTML, CSS, JSX, TSX, Vue, Svelte, Astro)
+scripts/critique_url.py   live Chromium CDP / HTTP fallback URL critique (contrast, fonts, overflow)
+scripts/mcp_server.py     stdlib JSON-RPC 2.0 MCP server (six tools, resources, prompts)
 scripts/check_catalog.py   ids and files still match
 scripts/install.py         install into another project and register agent rules / .mcp.json
 scripts/build_site_data.py sync site/data.js from taste/ and tokens/

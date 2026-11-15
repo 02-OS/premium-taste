@@ -1,0 +1,12 @@
+{
+  "name": "premium-taste",
+  "version": "1.1.0",
+  "description": "Premium Taste judgment layer: one direction, one reference, then critique.",
+  "skills": "./skills/",
+  "mcpServers": {
+    "premium-taste": {
+      "command": "python3",
+      "args": ["${CODEX_PLUGIN_ROOT}/scripts/mcp_server.py"]
+    }
+  }
+}
