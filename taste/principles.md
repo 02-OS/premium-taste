@@ -4,7 +4,7 @@ Premium is a set of refusals that leave one idea visible. Cheap UI is every habi
 
 This file is the judgment layer. It does not ship components and it does not license one look. The checkable form of every rule id below lives in [`principles.yaml`](principles.yaml). Named failures live in [`anti-patterns.yaml`](anti-patterns.yaml). Directions live in [`directions.yaml`](directions.yaml).
 
-Apply the rules in order. Name the job of the screen. Pick one direction. Decide what the page *is*. Then set type, space, and color. Then run [`skills/critique-ui.md`](../skills/critique-ui.md). Do not start from a palette.
+Apply the rules in order. Name the job of the screen. Pick one direction. Decide what the page *is*. Then set type, space, and color. Then run [`skills/critique-ui/SKILL.md`](../skills/critique-ui/SKILL.md). Do not start from a palette.
 
 **Precedence.** The user's explicit instruction and the product's real content win. The product's own `DESIGN.md` or brand guide wins on color and type families. These principles win on hierarchy, spacing, restraint, accessibility, and the refusal of generic skeletons. See `product.precedence`.
 

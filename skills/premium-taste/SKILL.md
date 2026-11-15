@@ -27,7 +27,7 @@ Read [AGENTS.md](../../AGENTS.md) and follow this sequence strictly:
 5. **Audit & critique against the Visual Target Gate**:
    - Run static lint: `python3 scripts/audit.py <changed-files>` (zero findings target).
    - Inspect live desktop (`1280px`) and mobile (`375px`) via `python3 scripts/critique_url.py <url>` when a local server is running.
-   - Run the critique checklist in [skills/critique-ui.md](../critique-ui.md) and fix structure (hierarchy, measure, count) before color.
+   - Run the critique checklist in [skills/critique-ui/SKILL.md](../critique-ui/SKILL.md) and fix structure (hierarchy, measure, count) before color.
 
 ## Quick Reference Map
 

@@ -3,6 +3,7 @@
   "version": "1.1.0",
   "description": "UI design judgment layer, 12 screen/flow patterns, 4 DESIGN.md token packs, and zero-dependency static/CDP UI auditors.",
   "contextFileName": "AGENTS.md",
+  "skills": "./skills/",
   "mcpServers": {
     "premium-taste": {
       "command": "python3",

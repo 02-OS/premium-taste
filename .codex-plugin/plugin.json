@@ -5,5 +5,11 @@
   "repository": "https://github.com/02-OS/premium-taste",
   "homepage": "https://02-os.github.io/premium-taste/",
   "license": "MIT",
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "mcpServers": {
+    "premium-taste": {
+      "command": "python3",
+      "args": ["${CODEX_PLUGIN_ROOT}/scripts/mcp_server.py"]
+    }
+  }
 }

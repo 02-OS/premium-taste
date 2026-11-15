@@ -9,7 +9,7 @@
   "mcpServers": {
     "premium-taste": {
       "command": "python3",
-      "args": ["scripts/mcp_server.py"]
+      "args": ["${CURSOR_PLUGIN_ROOT}/scripts/mcp_server.py"]
     }
   }
 }

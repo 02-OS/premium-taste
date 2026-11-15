@@ -13,7 +13,7 @@ load:
     - taste/directions.yaml
     - taste/principles.md
   before_critiquing:
-    - skills/critique-ui.md
+    - skills/critique-ui/SKILL.md
     - taste/principles.yaml
     - taste/anti-patterns.yaml
   pick_one:

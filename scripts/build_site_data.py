@@ -107,9 +107,6 @@ def parse_directions(text: str) -> list[dict]:
         folded_lines = []
 
     for line in text.splitlines():
-        if line.strip() == "choose:":
-            flush_folded()
-            break
         if line.startswith("  - id: "):
             flush_folded()
             cur = {"id": line.split(":", 1)[1].strip()}
@@ -143,6 +140,59 @@ def parse_directions(text: str) -> list[dict]:
                 cur[key] = strip_quotes(rest)
     flush_folded()
     return items
+
+
+def parse_direction_notes(text: str) -> dict:
+    choose: list[str] = []
+    register: list[str] = []
+    mode: str | None = None
+    for line in text.splitlines():
+        if line.strip() == "choose:":
+            mode = "choose"
+            continue
+        if line.startswith("register_note:"):
+            mode = "register"
+            rest = line.split(":", 1)[1].strip()
+            register = [] if rest in {">", "|", ""} else [strip_quotes(rest)]
+            if rest not in {">", "|", ""}:
+                mode = None
+            continue
+        if mode == "choose" and line.startswith("  - "):
+            choose.append(strip_quotes(line[4:].strip()))
+            continue
+        if mode == "register":
+            if not line.strip():
+                continue
+            if line.startswith("  "):
+                register.append(line.strip())
+                continue
+            mode = None
+    return {"choose": choose, "register_note": " ".join(register).strip()}
+
+
+def parse_simple_yaml(text: str) -> dict:
+    root: dict = {}
+    stack: list[tuple[int, dict]] = [(-1, root)]
+    for raw in text.splitlines():
+        if not raw.strip() or raw.strip().startswith("#"):
+            continue
+        indent = len(raw) - len(raw.lstrip(" "))
+        line = raw.strip()
+        while len(stack) > 1 and indent <= stack[-1][0]:
+            stack.pop()
+        parent = stack[-1][1]
+        if ":" not in line or line.startswith("- "):
+            continue
+        key, rest = line.split(":", 1)
+        key = key.strip()
+        rest = rest.strip()
+        if rest in {"", ">", "|"}:
+            node: dict = {}
+            parent[key] = node
+            stack.append((indent, node))
+        else:
+            parent[key] = strip_quotes(rest)
+    return root
 
 
 def parse_anti_patterns(text: str) -> list[dict]:
@@ -192,6 +242,12 @@ def parse_reference(path: Path) -> dict:
         "steal": section_bullets(body, "What to steal"),
         "avoid": section_bullets(body, "What not to copy"),
     }
+
+
+def parse_design_frontmatter(text: str) -> dict:
+    end = text.find("\n---", 3)
+    matter = text[3:end] if text.startswith("---") and end != -1 else ""
+    return parse_simple_yaml(matter)
 
 
 def parse_pattern(path: Path) -> dict:
@@ -267,7 +323,8 @@ def parse_tokens() -> dict[str, dict]:
         text = (ROOT / "tokens" / filename).read_text(encoding="utf-8")
         matter, body = split_frontmatter(text)
         name_m = re.search(r"^name:\s*(.+)$", matter, re.M)
-        out[direction_id] = {
+        imagery = parse_yaml_map(matter, "imagery")
+        pack = {
             "name": strip_quotes(name_m.group(1)) if name_m else direction_id,
             "direction": direction_id,
             "file": f"tokens/{filename}",
@@ -282,7 +339,25 @@ def parse_tokens() -> dict[str, dict]:
             "dosDonts": section_bullets(body, "Do's and Don'ts"),
             "agentPrompts": parse_agent_prompts(body),
         }
+        if imagery:
+            pack["imagery"] = imagery
+        out[direction_id] = pack
     return out
+
+
+def _typography_token(props: dict) -> dict:
+    weight = props.get("fontWeight", "")
+    line_height = str(props.get("lineHeight", ""))
+    value = {
+        "fontFamily": props.get("fontFamily", ""),
+        "fontSize": props.get("fontSize", "16px"),
+        "fontWeight": int(weight) if str(weight).isdigit() else 400,
+        "lineHeight": float(line_height) if re.match(r"^\d+(\.\d+)?$", line_height) else 1.5,
+        "letterSpacing": props.get("letterSpacing", "0em"),
+    }
+    if props.get("fontStyle"):
+        value["fontStyle"] = props["fontStyle"]
+    return value
 
 
 def render_dtcg_tokens(direction_id: str, pack: dict) -> dict:
@@ -297,16 +372,9 @@ def render_dtcg_tokens(direction_id: str, pack: dict) -> dict:
     }
     type_tokens: dict[str, dict] = {}
     for role, props in (pack.get("typography") or {}).items():
-        type_tokens[role] = {
-            "$type": "typography",
-            "$value": {
-                "fontFamily": props.get("fontFamily", ""),
-                "fontSize": props.get("fontSize", "16px"),
-                "fontWeight": int(props["fontWeight"]) if str(props.get("fontWeight", "")).isdigit() else 400,
-                "lineHeight": float(props["lineHeight"]) if re.match(r"^\d+(\.\d+)?$", str(props.get("lineHeight", ""))) else 1.5,
-                "letterSpacing": props.get("letterSpacing", "0em"),
-            },
-        }
+        if not isinstance(props, dict):
+            continue
+        type_tokens[role] = {"$type": "typography", "$value": _typography_token(props)}
     return {
         "$description": f"Premium Taste starter token pack — {pack.get('name', direction_id)} ({direction_id})",
         "$extensions": {
@@ -332,6 +400,10 @@ def render_dtcg_tokens(direction_id: str, pack: dict) -> dict:
     }
 
 
+def render_dtcg(pack: dict) -> dict:
+    return render_dtcg_tokens(str(pack.get("direction") or ""), pack)
+
+
 def render_design_md(direction_id: str, pack: dict, verbosity: str = "extended") -> str:
     """Return either the full Extended DESIGN.md source or a concise Compact brief."""
     if verbosity == "extended":
@@ -344,6 +416,9 @@ def render_design_md(direction_id: str, pack: dict, verbosity: str = "extended")
     dos = [d for d in (pack.get("dosDonts") or []) if d.lower().startswith("do ")][:3]
     donts = [d for d in (pack.get("dosDonts") or []) if d.lower().startswith("don't ")][:3]
     prompts = pack.get("agentPrompts") or []
+    semantic_keys = (
+        "ink", "ink-muted", "hairline", "line", "accent", "on-accent", "danger", "warning",
+    )
 
     lines = [
         f"# {pack.get('name', direction_id)} (`{direction_id}`) — Compact DESIGN.md",
@@ -353,51 +428,51 @@ def render_design_md(direction_id: str, pack: dict, verbosity: str = "extended")
         "## Surfaces & Colors",
         *(f"- `{k}`: `{v}`" for k, v in surfaces.items()),
         "- Semantic ink/accent: " + ", ".join(
-            f"`{k}={colors[k]}`" for k in ("ink", "ink-muted", "hairline", "line", "accent", "on-accent") if k in colors
+            f"`{k}={colors[k]}`" for k in semantic_keys if k in colors
         ),
         "",
         "## Type Roles",
         *(
             f"- `{role}`: {p.get('fontFamily', '').split(',')[0]} · {p.get('fontSize')} / {p.get('lineHeight')} · w{p.get('fontWeight')} · ls {p.get('letterSpacing', '0em')}"
+            + (f" · {p['fontStyle']}" if p.get("fontStyle") else "")
             for role, p in typo.items()
+            if isinstance(p, dict)
         ),
         "",
         "## Guardrails",
         *(f"- {item}" for item in dos),
         *(f"- {item}" for item in donts),
     ]
+    if pack.get("imagery"):
+        lines.extend(["", "## Imagery", *(f"- `{k}`: {v}" for k, v in pack["imagery"].items())])
     if prompts:
         lines.extend(["", "## Starter Component Prompt", f"- {prompts[0]}"])
     return "\n".join(lines) + "\n"
 
 
-def main() -> int:
-    directions = parse_directions(
-        (ROOT / "taste" / "directions.yaml").read_text(encoding="utf-8")
-    )
+def build_payload() -> dict:
+    direction_text = (ROOT / "taste" / "directions.yaml").read_text(encoding="utf-8")
+    directions = parse_directions(direction_text)
+    notes = parse_direction_notes(direction_text)
     anti_patterns = parse_anti_patterns(
         (ROOT / "taste" / "anti-patterns.yaml").read_text(encoding="utf-8")
     )
     principles_text = (ROOT / "taste" / "principles.yaml").read_text(encoding="utf-8")
     principle_count = len(re.findall(r"^\s*- id:\s*", principles_text, re.M))
-
     index_text = (ROOT / "taste" / "references" / "index.yaml").read_text(encoding="utf-8")
     ref_ids = re.findall(r"^\s+- id:\s*([a-z0-9-]+)\s*$", index_text, re.M)
     references = [
         parse_reference(ROOT / "taste" / "references" / f"{ref_id}.md")
         for ref_id in ref_ids
     ]
-
     pat_index_text = (ROOT / "taste" / "patterns" / "index.yaml").read_text(encoding="utf-8")
     pat_ids = re.findall(r"^\s+- id:\s*([a-z0-9-]+)\s*$", pat_index_text, re.M)
     patterns = [
         parse_pattern(ROOT / "taste" / "patterns" / f"{pat_id}.md")
         for pat_id in pat_ids
     ]
-
     tokens = parse_tokens()
-
-    payload = {
+    return {
         "counts": {
             "principles": principle_count,
             "antiPatterns": len(anti_patterns),
@@ -406,22 +481,47 @@ def main() -> int:
             "directions": len(directions),
         },
         "directions": directions,
+        "choose": notes["choose"],
+        "registerNote": notes["register_note"],
         "references": references,
         "patterns": patterns,
         "antiPatterns": anti_patterns,
         "tokens": tokens,
     }
 
-    out_path = ROOT / "site" / "data.js"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+def render_data_js(payload: dict | None = None) -> str:
+    data = payload if payload is not None else build_payload()
     header = "// Generated from taste/ and tokens/ by scripts/build_site_data.py.\n"
-    out_path.write_text(
-        f"{header}window.PREMIUM_TASTE_DATA = {json.dumps(payload, indent=2, ensure_ascii=False)};\n",
-        encoding="utf-8",
-    )
+    return f"{header}window.PREMIUM_TASTE_DATA = {json.dumps(data, indent=2, ensure_ascii=False)};\n"
+
+
+def main(argv: list[str] | None = None) -> int:
+    if argv is None:
+        argv = sys.argv[1:]
+    check = "--check" in argv
+    payload = build_payload()
+    rendered = render_data_js(payload)
+    out_path = ROOT / "site" / "data.js"
+    counts = payload["counts"]
+    if check:
+        current = out_path.read_text(encoding="utf-8") if out_path.exists() else ""
+        if current != rendered:
+            print("site/data.js is stale. Run python3 scripts/build_site_data.py", file=sys.stderr)
+            return 1
+        print(
+            "site/data.js is fresh "
+            f"({counts['principles']} principles, {counts['antiPatterns']} anti-patterns, "
+            f"{counts['references']} references, {counts.get('patterns', 0)} patterns, "
+            f"{counts['directions']} directions)"
+        )
+        return 0
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(rendered, encoding="utf-8")
     print(
-        f"wrote {out_path} ({principle_count} principles, {len(anti_patterns)} anti-patterns, "
-        f"{len(references)} references, {len(patterns)} patterns, {len(directions)} directions)"
+        f"wrote {out_path} ({counts['principles']} principles, {counts['antiPatterns']} anti-patterns, "
+        f"{counts['references']} references, {counts.get('patterns', 0)} patterns, "
+        f"{counts['directions']} directions)"
     )
     return 0
 

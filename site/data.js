@@ -127,6 +127,15 @@ window.PREMIUM_TASTE_DATA = {
       "first_screen": "A masthead in small type. An essay continues as a full image with a factual caption, or a text column of about 65–72 characters with the title only modestly larger than the body. A newspaper front ranks several stories by headline size, column width, and position, on one paper color, with rules instead of cards. Navigation is a section, a search, or a few words, not a product bar of buttons."
     }
   ],
+  "choose": [
+    "If this screen is a long text, a story, a catalog essay, a briefing, or a front that ranks several stories, use editorial-print.",
+    "If this screen is a tool for repeated decisions, data, configuration, or writing, use precise-technical. A machine you inspect part by part belongs here too.",
+    "If this screen is a room for one work, a film, music, or night culture, use cinematic-dark. A listening surface is the room where the work is playing, not the app's home.",
+    "If this screen presents an object, a place, or a slow brand as something to look at, use quiet-luxury.",
+    "If two match, pick the job of this screen. A ceramics studio's article is editorial-print. The same studio's bowl page is quiet-luxury. The same studio's order list is precise-technical.",
+    "Never blend all four into one screen. A product may use different directions on different screens. Keep type and color related; change density and structure with the job."
+  ],
+  "registerNote": "Cinematic dark is not \"the same UI with a dark palette\". Quiet luxury is not \"the same UI with a serif and more margin\". If the structure is still the generic skeleton, you have not chosen a direction. You have themed a template.",
   "references": [
     {
       "id": "aesop",
