@@ -16,17 +16,20 @@
   <header class="topbar">
     <div class="container topbar-inner">
       <div class="brand-group">
-        <a class="wordmark" href="#workbench">premium-taste</a>
+        <a class="wordmark" href="#workbench">
+          <img class="wordmark-mark" src="./assets/sites/premium-taste.png" alt="" width="22" height="22" decoding="async" />
+          <span>premium-taste</span>
+        </a>
         <span class="brand-meta" id="header-counts">68 rules · 30 anti-patterns · 18 refs · 12 patterns</span>
       </div>
       <nav class="topnav" aria-label="Primary navigation">
-        <a href="#workbench">Workbench</a>
+        <a href="#workbench" aria-current="location">Workbench</a>
         <a href="#auditor">Auditor</a>
         <a href="#setup">Install &amp; MCP</a>
         <a href="#tokens">Tokens</a>
         <a href="#directions">Directions</a>
         <a href="#references">Gallery</a>
-        <a href="https://github.com/02-OS/premium-taste" target="_blank" rel="noreferrer">GitHub ↗</a>
+        <a href="https://github.com/02-OS/premium-taste" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
       </nav>
     </div>
   </header>
@@ -37,7 +40,7 @@
       <div class="container">
         <div class="hero-split">
           <div class="hero-left">
-            <p class="eyebrow">Design Judgment + Deterministic Tooling</p>
+            <p class="eyebrow">01 · Design Judgment + Deterministic Tooling</p>
             <h1 id="hero-h1">Teach your coding agent why UI looks finished.</h1>
           </div>
           <div class="hero-right">
@@ -96,21 +99,26 @@
         <div class="auditor-split">
           <div class="editor-pane">
             <div class="editor-bar">
-              <label for="audit-file-name">Filename context</label>
-              <input id="audit-file-name" type="text" value="hero.html" spellcheck="false" />
-              <label for="audit-allow-fonts">Allowed fonts</label>
-              <input id="audit-allow-fonts" type="text" value="" placeholder="comma-separated brand faces" spellcheck="false" />
+              <div class="editor-field">
+                <label for="audit-file-name">Filename</label>
+                <input id="audit-file-name" type="text" value="hero.html" spellcheck="false" />
+              </div>
+              <div class="editor-field">
+                <label for="audit-allow-fonts">Allowed fonts</label>
+                <input id="audit-allow-fonts" type="text" value="" placeholder="comma-separated brand faces" spellcheck="false" />
+              </div>
             </div>
             <div class="editor-area-wrap">
+              <div class="editor-gutter" id="audit-line-gutter" aria-hidden="true"></div>
               <label class="sr-only" for="audit-code-input">HTML, CSS, or JSX code snippet to audit</label>
-              <textarea id="audit-code-input" rows="15" spellcheck="false"></textarea>
+              <textarea id="audit-code-input" rows="15" spellcheck="false" wrap="off"></textarea>
             </div>
           </div>
 
           <div class="report-pane" aria-live="polite">
             <div class="report-head">
               <div>
-                <p class="eyebrow" style="margin-bottom:0.25rem;">Critique Output</p>
+                <p class="eyebrow report-eyebrow">Critique Output</p>
                 <p class="audit-verdict" id="audit-verdict">Checking...</p>
               </div>
               <button type="button" class="chip-btn" id="copy-audit-report">Copy report</button>
@@ -159,7 +167,7 @@
                   <span>bash · copies .premium-taste/, scripts/, and .mcp.json</span>
                   <button type="button" class="term-copy copy-btn" data-copy-target="cmd-curl">Copy</button>
                 </div>
-                <pre id="cmd-curl" tabindex="0">curl -fsSL https://raw.githubusercontent.com/02-OS/premium-taste/master/install.sh | bash -s -- . --agent all --mcp</pre>
+                <pre id="cmd-curl" class="wrap-cmd" tabindex="0">curl -fsSL https://raw.githubusercontent.com/02-OS/premium-taste/master/install.sh | bash -s -- . --agent all --mcp</pre>
               </div>
               <p class="sub-caption">Or dry-run locally without modifying files: <code>python3 scripts/install.py /path/to/app --agent all --mcp --dry-run</code></p>
             </div>
@@ -243,10 +251,10 @@ python3 scripts/check_catalog.py</pre>
             <h2 id="tokens-h2">Tune starter palettes, verify ratios, and export CSS or Tailwind.</h2>
           </div>
           <div class="chip-row" role="group" aria-label="Load starter direction tokens">
-            <button type="button" class="chip-btn" aria-pressed="true" data-token-pack="precise-technical">Instrument</button>
-            <button type="button" class="chip-btn" aria-pressed="false" data-token-pack="quiet-luxury">Warm Paper</button>
-            <button type="button" class="chip-btn" aria-pressed="false" data-token-pack="editorial-print">Column</button>
-            <button type="button" class="chip-btn" aria-pressed="false" data-token-pack="cinematic-dark">Night Room</button>
+            <button type="button" class="chip-btn" aria-pressed="true" data-token-pack="precise-technical"><span class="pack-dot pack-dot-instrument" aria-hidden="true"></span>Instrument</button>
+            <button type="button" class="chip-btn" aria-pressed="false" data-token-pack="quiet-luxury"><span class="pack-dot pack-dot-paper" aria-hidden="true"></span>Warm Paper</button>
+            <button type="button" class="chip-btn" aria-pressed="false" data-token-pack="editorial-print"><span class="pack-dot pack-dot-column" aria-hidden="true"></span>Column</button>
+            <button type="button" class="chip-btn" aria-pressed="false" data-token-pack="cinematic-dark"><span class="pack-dot pack-dot-night" aria-hidden="true"></span>Night Room</button>
           </div>
         </div>
 
@@ -389,16 +397,16 @@ python3 scripts/check_catalog.py</pre>
         </div>
 
         <div class="index-list">
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/AGENTS.md" target="_blank" rel="noreferrer"><code>AGENTS.md</code><span>Mandatory load order and refusal rules</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/install.sh" target="_blank" rel="noreferrer"><code>install.sh</code><span>Zero-clone curl installer supporting --agent and --mcp</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/audit.py" target="_blank" rel="noreferrer"><code>scripts/audit.py</code><span>Deterministic static linter (HTML, CSS, JSX, TSX, Vue, Svelte, Astro)</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/critique_url.py" target="_blank" rel="noreferrer"><code>scripts/critique_url.py</code><span>Headless Chromium CDP live DOM contrast &amp; layout checker</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/mcp_server.py" target="_blank" rel="noreferrer"><code>scripts/mcp_server.py</code><span>Stdlib JSON-RPC 2.0 MCP server (6 tools over stdio)</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/install.py" target="_blank" rel="noreferrer"><code>scripts/install.py</code><span>Copies .premium-taste/, writes agent skills, merges .mcp.json</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/taste/principles.yaml" target="_blank" rel="noreferrer"><code>taste/principles.yaml</code><span>68 normative rules scored across 6 critique dimensions</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/taste/patterns/index.yaml" target="_blank" rel="noreferrer"><code>taste/patterns/index.yaml</code><span>12 screen &amp; multi-step flow architecture contracts</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/skills/premium-taste/SKILL.md" target="_blank" rel="noreferrer"><code>skills/premium-taste/SKILL.md</code><span>Portable skill entrypoint (+ .claude-plugin, .cursor-plugin, .codex-plugin)</span></a>
-          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/examples/before-after.md" target="_blank" rel="noreferrer"><code>examples/before-after.md</code><span>Side-by-side HTML rewrites (AI workspace, pricing, metrics, CLI, store)</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/AGENTS.md" target="_blank" rel="noopener noreferrer"><code>AGENTS.md</code><span>Mandatory load order and refusal rules</span><span class="file-link-arrow" aria-hidden="true">↗</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/install.sh" target="_blank" rel="noopener noreferrer"><code>install.sh</code><span>Zero-clone curl installer supporting --agent and --mcp</span><span class="file-link-arrow" aria-hidden="true">↗</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/audit.py" target="_blank" rel="noopener noreferrer"><code>scripts/audit.py</code><span>Deterministic static linter (HTML, CSS, JSX, TSX, Vue, Svelte, Astro)</span><span class="file-link-arrow" aria-hidden="true">↗</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/critique_url.py" target="_blank" rel="noopener noreferrer"><code>scripts/critique_url.py</code><span>Headless Chromium CDP live DOM contrast &amp; layout checker</span><span class="file-link-arrow" aria-hidden="true">↗</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/mcp_server.py" target="_blank" rel="noopener noreferrer"><code>scripts/mcp_server.py</code><span>Stdlib JSON-RPC 2.0 MCP server (6 tools over stdio)</span><span class="file-link-arrow" aria-hidden="true">↗</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/scripts/install.py" target="_blank" rel="noopener noreferrer"><code>scripts/install.py</code><span>Copies .premium-taste/, writes agent skills, merges .mcp.json</span><span class="file-link-arrow" aria-hidden="true">↗</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/taste/principles.yaml" target="_blank" rel="noopener noreferrer"><code>taste/principles.yaml</code><span>68 normative rules scored across 6 critique dimensions</span><span class="file-link-arrow" aria-hidden="true">↗</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/taste/patterns/index.yaml" target="_blank" rel="noopener noreferrer"><code>taste/patterns/index.yaml</code><span>12 screen &amp; multi-step flow architecture contracts</span><span class="file-link-arrow" aria-hidden="true">↗</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/skills/premium-taste/SKILL.md" target="_blank" rel="noopener noreferrer"><code>skills/premium-taste/SKILL.md</code><span>Portable skill entrypoint (+ .claude-plugin, .cursor-plugin, .codex-plugin)</span><span class="file-link-arrow" aria-hidden="true">↗</span></a>
+          <a class="file-link" href="https://github.com/02-OS/premium-taste/blob/master/examples/before-after.md" target="_blank" rel="noopener noreferrer"><code>examples/before-after.md</code><span>Side-by-side HTML rewrites (AI workspace, pricing, metrics, CLI, store)</span><span class="file-link-arrow" aria-hidden="true">↗</span></a>
         </div>
 
         <footer class="site-foot">

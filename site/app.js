@@ -38,6 +38,17 @@
       .replace(/'/g, "&#39;");
   }
 
+  function formatInlineProse(str) {
+    return escapeHtml(str)
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+  }
+
+  function capitalizeFirst(str) {
+    var s = String(str || "");
+    return s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+  }
+
   function wireTablist(tablistEl, onChange) {
     if (!tablistEl) return;
     var tabs = Array.prototype.slice.call(tablistEl.querySelectorAll('[role="tab"]'));
@@ -77,18 +88,73 @@
   function wireCopyButton(btn, getText) {
     if (!btn) return;
     var orig = btn.textContent;
+    var resetTimer = 0;
     btn.addEventListener("click", function () {
       var text = typeof getText === "function" ? getText() : "";
       if (!text) return;
       function done() {
-        btn.textContent = "Copied";
-        window.setTimeout(function () { btn.textContent = orig; }, 1500);
+        window.clearTimeout(resetTimer);
+        btn.textContent = "Copied ✓";
+        btn.classList.add("is-copied");
+        resetTimer = window.setTimeout(function () {
+          btn.textContent = orig;
+          btn.classList.remove("is-copied");
+        }, 1500);
       }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(done).catch(done);
       } else {
         done();
       }
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* TOPNAV ACTIVE SECTION SCROLLSPY                                     */
+  /* ------------------------------------------------------------------ */
+  var navLinks = Array.prototype.slice.call(document.querySelectorAll('.topnav a[href^="#"]'));
+  if (navLinks.length && "IntersectionObserver" in window) {
+    var navById = {};
+    var observedSections = [];
+    navLinks.forEach(function (link) {
+      var id = (link.getAttribute("href") || "").slice(1);
+      var sec = id ? document.getElementById(id) : null;
+      if (sec) {
+        navById[id] = link;
+        observedSections.push(sec);
+      }
+    });
+    function setActiveNav(id) {
+      if (!navById[id]) return;
+      navLinks.forEach(function (link) {
+        if (link === navById[id]) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      });
+    }
+    var visibleMap = {};
+    var navObserver = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          visibleMap[entry.target.id] = entry.isIntersecting ? entry.intersectionRatio : 0;
+        });
+        var bestId = null;
+        var bestRatio = 0;
+        observedSections.forEach(function (sec) {
+          var r = visibleMap[sec.id] || 0;
+          if (r > bestRatio) {
+            bestRatio = r;
+            bestId = sec.id;
+          }
+        });
+        if (bestId) setActiveNav(bestId);
+      },
+      { rootMargin: "-20% 0px -55% 0px", threshold: [0, 0.15, 0.35, 0.6] }
+    );
+    observedSections.forEach(function (sec) { navObserver.observe(sec); });
+    navLinks.forEach(function (link) {
+      link.addEventListener("click", function () {
+        setActiveNav((link.getAttribute("href") || "").slice(1));
+      });
     });
   }
 
@@ -109,16 +175,16 @@
     '<line x1="0" y1="50" x2="280" y2="50" stroke="#e2e2da" stroke-width="1"/>' +
     '<rect x="4" y="38" width="18" height="12" fill="#c7cbc5"/><rect x="26" y="40" width="18" height="10" fill="#c7cbc5"/>' +
     '<rect x="48" y="35" width="18" height="15" fill="#c7cbc5"/><rect x="70" y="39" width="18" height="11" fill="#c7cbc5"/>' +
-    '<rect x="92" y="36" width="18" height="14" fill="#c7cbc5"/><rect x="114" y="32" width="18" height="18" fill="#8a5a12"/>' +
-    '<rect x="136" y="24" width="18" height="26" fill="#8a5a12"/><rect x="158" y="8" width="18" height="42" fill="#8f2d1f"/>' +
-    '<rect x="180" y="12" width="18" height="38" fill="#8f2d1f"/><rect x="202" y="29" width="18" height="21" fill="#8a5a12"/>' +
+    '<rect x="92" y="36" width="18" height="14" fill="#c7cbc5"/><rect x="114" y="32" width="18" height="18" fill="#7c4f0d"/>' +
+    '<rect x="136" y="24" width="18" height="26" fill="#7c4f0d"/><rect x="158" y="8" width="18" height="42" fill="#8f2d1f"/>' +
+    '<rect x="180" y="12" width="18" height="38" fill="#8f2d1f"/><rect x="202" y="29" width="18" height="21" fill="#7c4f0d"/>' +
     '<rect x="224" y="38" width="18" height="12" fill="#185a3f"/><rect x="246" y="41" width="18" height="9" fill="#185a3f"/>' +
     "</svg>";
 
   var SCENARIOS = {
     ai: {
-      beforeLabel: "Without rules · FAIL (17 violations)",
-      afterLabel: "precise-technical · ia-writer + figma · PASS",
+      beforeLabel: "FAIL · 17 violations",
+      afterLabel: "precise-technical · PASS",
       notes: [
         { rule: "product.first-screen", text: "Replaces 4 vanity stat boxes and an upgrade banner with context files + diff output immediately." },
         { rule: "chrome.sparkle + type.avoid-tells", text: "Drops sparkles, purple glows, and Inter gradient text for quiet plain action verbs." },
@@ -167,8 +233,8 @@
       },
     },
     rowan: {
-      beforeLabel: "Without rules · FAIL (12 violations)",
-      afterLabel: "quiet-luxury · aesop + cos · PASS",
+      beforeLabel: "FAIL · 12 violations",
+      afterLabel: "quiet-luxury · PASS",
       notes: [
         { rule: "uniqueness.material", text: "Swaps cold purple SaaS chrome for Warm Paper (#f3efe6), terracotta ink (#7a3e2e), and quiet clay proportions." },
         { rule: "content.abstract-verbs", text: "Replaces 'Elevate your everyday rituals' with firing temperature, weight, diameter, and price." },
@@ -193,9 +259,9 @@
       afterHtml: function () {
         return (
           '<div class="mini-rowan">' +
-          '<div>' + ROWAN_BOWL_SVG + "</div>" +
+          "<div>" + ROWAN_BOWL_SVG + "</div>" +
           '<div style="display:grid;gap:0.375rem;">' +
-          '<div style="font-family:var(--font-mono);font-size:0.7rem;color:#5c564c;">ROWAN CLAY · BATCH 14</div>' +
+          '<div style="font-family:var(--font-mono);font-size:0.75rem;color:#5c564c;">ROWAN CLAY · BATCH 14</div>' +
           '<div style="font-size:1rem;font-weight:600;">Ash glaze bowl, 185 mm</div>' +
           '<div style="font-size:0.8125rem;color:#5c564c;">Reduction-fired to 1,240°C over speckled stoneware. 490&nbsp;g.</div>' +
           '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:0.25rem;">' +
@@ -208,8 +274,8 @@
       },
     },
     pricing: {
-      beforeLabel: "Without rules · FAIL (13 violations)",
-      afterLabel: "precise-technical · stripe-docs · PASS",
+      beforeLabel: "FAIL · 13 violations",
+      afterLabel: "precise-technical · PASS",
       notes: [
         { rule: "skeleton.saas-landing", text: "Turns 3 shadowed 'MOST POPULAR' feature boxes into a scannable specification table." },
         { rule: "content.fake-proof", text: "Deletes 'Trusted by 5,000+ startups' and leads directly with the real metered unit rate." },
@@ -248,11 +314,11 @@
       },
     },
     metrics: {
-      beforeLabel: "Without rules · FAIL (dashboard-costume)",
-      afterLabel: "precise-technical · things-3 · PASS",
+      beforeLabel: "FAIL · dashboard-costume",
+      afterLabel: "precise-technical · PASS",
       notes: [
         { rule: "layout.dashboard-costume", text: "Cuts decorative '99.99% Uptime' KPI boxes and puts live failed endpoints on row one." },
-        { rule: "color.meaningful-semantics", text: "Uses red (#8f2d1f) and amber (#8a5a12) strictly on real degraded latency bars and queue rows." },
+        { rule: "color.meaningful-semantics", text: "Uses red (#8f2d1f) and amber (#7c4f0d) strictly on real degraded latency bars and queue rows." },
         { rule: "product.first-screen", text: "Gives on-call engineers route, p99 latency, error percentage, and time started above the fold." },
       ],
       beforeHtml: function () {
@@ -287,8 +353,8 @@
       },
     },
     cli: {
-      beforeLabel: "Without rules · FAIL (14 violations)",
-      afterLabel: "precise-technical · teenage-engineering · PASS",
+      beforeLabel: "FAIL · 14 violations",
+      afterLabel: "precise-technical · PASS",
       notes: [
         { rule: "product.first-screen", text: "Puts real curl install line + schema validation error message immediately on the first fold." },
         { rule: "content.abstract-verbs", text: "Replaces 'Blazing Fast' & 'Enterprise Safe' cards with 1.8 MB static musl binary and 4.2 ms parse metrics." },
@@ -317,7 +383,7 @@
           '<div style="color:#a6aca7;"># static binary · 1.8 MB · zero runtime deps</div>' +
           '<div>$ curl -fsSL https://get.kestrel.dev/install.sh | sh<br/>$ kestrel check deploy/*.yaml --schema service.json<br/><span style="color:#f4a298;">deploy/api.yaml:14:9 error [port] expected integer, got "8080"</span></div>' +
           "</div>" +
-          '<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:0.72rem;color:var(--muted);">' +
+          '<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:0.75rem;color:var(--muted);">' +
           "<span>Cold parse: 4.2 ms</span><span>Exit 0 pass · 1 fail · 2 I/O</span>" +
           "</div>" +
           "</div>"
@@ -325,8 +391,8 @@
       },
     },
     harbor: {
-      beforeLabel: "Without rules · FAIL (generic rounded cards)",
-      afterLabel: "editorial-print · financial-times + monocle · PASS",
+      beforeLabel: "FAIL · generic cards",
+      afterLabel: "editorial-print · PASS",
       notes: [
         { rule: "density.measure", text: "Sets readable 56–66ch editorial measure paired with issue dateline and crisp masthead rule." },
         { rule: "material.ink-hairlines", text: "Replaces glowing rounded teaser tiles with warm paper #fbf7f1 and ruled ink hairlines." },
@@ -347,7 +413,7 @@
       afterHtml: function () {
         return (
           '<div class="mini-editorial">' +
-          '<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:0.7rem;color:#4e4944;border-bottom:1px solid #d8d0c4;padding-bottom:0.35rem;">' +
+          '<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:0.75rem;color:#4e4944;border-bottom:1px solid #d8d0c4;padding-bottom:0.35rem;">' +
           "<span>HARBOR DISPATCH · ISSUE 48</span><span>6 MIN READ</span>" +
           "</div>" +
           '<div style="font-size:1.05rem;font-weight:600;line-height:1.25;max-width:34ch;">Why Nordic grid operators are adding 4-hour thermal brick storage next to substations</div>' +
@@ -377,15 +443,15 @@
       if (wb.view === "split" || wb.view === "before") {
         html +=
           '<div class="stage-pane stage-pane-before" data-taste-specimen="negative">' +
-          '<div class="stage-pane-head"><span>WITHOUT PREMIUM TASTE</span><span class="status-fail">' + escapeHtml(sc.beforeLabel) + "</span></div>" +
-          '<div>' + sc.beforeHtml() + "</div>" +
+          '<div class="stage-pane-head"><span class="stage-pane-kicker">WITHOUT PREMIUM TASTE</span><span class="status-tag status-fail">' + escapeHtml(sc.beforeLabel) + "</span></div>" +
+          '<div class="stage-specimen">' + sc.beforeHtml() + "</div>" +
           "</div>";
       }
       if (wb.view === "split" || wb.view === "after") {
         html +=
-          '<div class="stage-pane">' +
-          '<div class="stage-pane-head"><span>WITH PREMIUM TASTE</span><span class="status-pass">' + escapeHtml(sc.afterLabel) + "</span></div>" +
-          '<div>' + sc.afterHtml() + "</div>" +
+          '<div class="stage-pane stage-pane-after">' +
+          '<div class="stage-pane-head"><span class="stage-pane-kicker">WITH PREMIUM TASTE</span><span class="status-tag status-pass">' + escapeHtml(sc.afterLabel) + "</span></div>" +
+          '<div class="stage-specimen">' + sc.afterHtml() + "</div>" +
           "</div>";
       }
       stageSplitEl.innerHTML = html;
@@ -393,10 +459,13 @@
 
     if (diffStripEl) {
       diffStripEl.innerHTML = sc.notes
-        .map(function (n) {
+        .map(function (n, idx) {
           return (
             '<div class="diff-note">' +
+            '<div class="diff-note-head">' +
+            '<span class="diff-idx">0' + (idx + 1) + "</span>" +
             '<span class="diff-rule">' + escapeHtml(n.rule) + "</span>" +
+            "</div>" +
             '<p class="diff-text">' + escapeHtml(n.text) + "</p>" +
             "</div>"
           );
@@ -491,11 +560,13 @@
   var auditFileInput = document.getElementById("audit-file-name");
   var auditFontsInput = document.getElementById("audit-allow-fonts");
   var auditCodeInput = document.getElementById("audit-code-input");
+  var auditGutterEl = document.getElementById("audit-line-gutter");
   var auditVerdict = document.getElementById("audit-verdict");
   var auditScoresEl = document.getElementById("audit-scores");
   var auditFindingsEl = document.getElementById("audit-findings");
   var copyAuditBtn = document.getElementById("copy-audit-report");
   var latestAuditResult = null;
+  var activeJumpLine = 0;
 
   var SCORE_LABELS = [
     ["hierarchy", "Hierarchy"],
@@ -513,11 +584,58 @@
     }).filter(Boolean);
   }
 
+  function renderAuditGutter(codeText, findings) {
+    if (!auditGutterEl) return;
+    var severityByLine = {};
+    (findings || []).forEach(function (f) {
+      var ln = Number(f.line) || 0;
+      if (!ln) return;
+      if (f.severity === "error" || !severityByLine[ln]) {
+        severityByLine[ln] = f.severity;
+      }
+    });
+    var lineCount = Math.max(1, String(codeText || "").split("\n").length);
+    var rows = [];
+    for (var i = 1; i <= lineCount; i++) {
+      var cls = "gutter-line";
+      if (i === activeJumpLine) cls += " is-active";
+      else if (severityByLine[i] === "error") cls += " is-error";
+      else if (severityByLine[i] === "warn") cls += " is-warn";
+      rows.push('<div class="' + cls + '">' + i + "</div>");
+    }
+    auditGutterEl.innerHTML = rows.join("");
+    if (auditCodeInput) {
+      auditGutterEl.scrollTop = auditCodeInput.scrollTop;
+    }
+  }
+
+  function jumpToAuditLine(lineNum) {
+    if (!auditCodeInput) return;
+    var target = Math.max(1, Number(lineNum) || 1);
+    var lines = auditCodeInput.value.split("\n");
+    var idx = Math.min(target - 1, Math.max(0, lines.length - 1));
+    var start = 0;
+    for (var i = 0; i < idx; i++) {
+      start += lines[i].length + 1;
+    }
+    var end = start + (lines[idx] ? lines[idx].length : 0);
+    auditCodeInput.focus();
+    if (auditCodeInput.setSelectionRange) {
+      auditCodeInput.setSelectionRange(start, end);
+    }
+    var cs = window.getComputedStyle(auditCodeInput);
+    var lh = parseFloat(cs.lineHeight) || 20.8;
+    auditCodeInput.scrollTop = Math.max(0, idx * lh - auditCodeInput.clientHeight * 0.35);
+    activeJumpLine = idx + 1;
+    renderAuditGutter(auditCodeInput.value, latestAuditResult ? latestAuditResult.findings : []);
+  }
+
   function runLiveAudit() {
     if (!Audit || !auditCodeInput) return;
     var fname = (auditFileInput && auditFileInput.value.trim()) || "snippet.html";
     var res = Audit.auditCode(auditCodeInput.value, fname, { allowFonts: allowFontList() });
     latestAuditResult = res;
+    renderAuditGutter(auditCodeInput.value, res.findings);
 
     if (auditVerdict) {
       if (!res.findings.length) {
@@ -533,14 +651,14 @@
       auditScoresEl.innerHTML = SCORE_LABELS.map(function (pair) {
         var val = res.scores[pair[0]];
         var pct = Math.max(12, val * 20);
-        var lowCls = val <= 2 ? " is-low" : "";
+        var stateCls = val <= 2 ? " is-low" : val <= 3 ? " is-mid" : "";
         return (
           '<div class="score-meter">' +
           '<div class="score-meter-row">' +
           '<span class="score-meter-name">' + pair[1] + "</span>" +
           '<span class="score-meter-num">' + val + "/5</span>" +
           "</div>" +
-          '<div class="meter-track"><div class="meter-fill' + lowCls + '" style="width:' + pct + '%;"></div></div>' +
+          '<div class="meter-track"><div class="meter-fill' + stateCls + '" style="width:' + pct + '%;"></div></div>' +
           "</div>"
         );
       }).join("");
@@ -549,7 +667,7 @@
     if (auditFindingsEl) {
       if (!res.findings.length) {
         auditFindingsEl.innerHTML =
-          '<div class="finding-row" style="border-inline-start-color:var(--accent);">' +
+          '<div class="finding-row is-pass">' +
           '<div class="finding-row-id status-pass">No automated anti-patterns found</div>' +
           "<p>Verify visual measure (60–72ch) and first-screen job fit manually.</p>" +
           "</div>";
@@ -557,10 +675,17 @@
         auditFindingsEl.innerHTML = res.findings
           .map(function (f) {
             return (
-              '<div class="finding-row' + (f.severity === "warn" ? " is-warn" : "") + '">' +
-              '<div class="finding-row-id">[' + escapeHtml(f.severity.toUpperCase()) + "] L" + f.line + " · " + escapeHtml(f.rule) + "</div>" +
+              '<button type="button" class="finding-row' + (f.severity === "warn" ? " is-warn" : "") + '" data-jump-line="' + f.line + '">' +
+              '<span class="finding-head">' +
+              '<span class="finding-meta">' +
+              '<span class="finding-sev">' + escapeHtml(f.severity.toUpperCase()) + "</span>" +
+              '<span class="finding-line">L' + f.line + "</span>" +
+              '<span class="finding-row-id">' + escapeHtml(f.rule) + "</span>" +
+              "</span>" +
+              '<span class="finding-jump">Jump ↵</span>' +
+              "</span>" +
               "<p>" + escapeHtml(f.message) + " Fix: " + escapeHtml(f.fix) + "</p>" +
-              "</div>"
+              "</button>"
             );
           })
           .join("");
@@ -571,19 +696,46 @@
   var scheduleLiveAudit = debounce(runLiveAudit, 150);
   if (auditCodeInput) {
     auditCodeInput.value = AUDIT_PRESETS.saas.code;
-    auditCodeInput.addEventListener("input", scheduleLiveAudit);
+    auditCodeInput.addEventListener("input", function () {
+      activeJumpLine = 0;
+      renderAuditGutter(auditCodeInput.value, latestAuditResult ? latestAuditResult.findings : []);
+      scheduleLiveAudit();
+    });
+    auditCodeInput.addEventListener("scroll", function () {
+      if (auditGutterEl) auditGutterEl.scrollTop = auditCodeInput.scrollTop;
+    });
+    if (auditGutterEl && "ResizeObserver" in window) {
+      var gutterResizeObserver = new ResizeObserver(function () {
+        if (auditCodeInput.style.height) {
+          auditGutterEl.style.height = auditCodeInput.offsetHeight + "px";
+        }
+      });
+      gutterResizeObserver.observe(auditCodeInput);
+    }
   }
   if (auditFileInput) auditFileInput.addEventListener("input", scheduleLiveAudit);
   if (auditFontsInput) auditFontsInput.addEventListener("input", scheduleLiveAudit);
+
+  if (auditFindingsEl) {
+    auditFindingsEl.addEventListener("click", function (event) {
+      var btn = event.target.closest ? event.target.closest("[data-jump-line]") : null;
+      if (!btn || !auditFindingsEl.contains(btn)) return;
+      jumpToAuditLine(btn.getAttribute("data-jump-line"));
+    });
+  }
 
   var presetBtns = Array.prototype.slice.call(document.querySelectorAll("[data-preset]"));
   presetBtns.forEach(function (btn) {
     btn.addEventListener("click", function () {
       var p = AUDIT_PRESETS[btn.getAttribute("data-preset")];
       if (!p) return;
+      activeJumpLine = 0;
       presetBtns.forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
       if (auditFileInput) auditFileInput.value = p.file;
-      if (auditCodeInput) auditCodeInput.value = p.code;
+      if (auditCodeInput) {
+        auditCodeInput.value = p.code;
+        auditCodeInput.scrollTop = 0;
+      }
       runLiveAudit();
     });
   });
@@ -785,7 +937,7 @@
             "<tr>" +
             "<td><code>" + p.name + "</code></td>" +
             "<td><code>" + r.toFixed(2) + ":1</code></td>" +
-            '<td class="' + (r >= 4.5 ? "ratio-pass" : "ratio-fail") + '">' + status + "</td>" +
+            '<td><span class="ratio-badge ' + (r >= 4.5 ? "ratio-pass" : "ratio-fail") + '">' + status + "</span></td>" +
             "</tr>"
           );
         })
@@ -875,21 +1027,21 @@
     }
 
     if (tokenExportCode) {
-      var pack = tokenState.pack || {};
+      var packObj = tokenState.pack || {};
       var lines = [];
       var colorKeys = Object.keys(c);
       function pushScale(prefix) {
         colorKeys.forEach(function (key) {
           lines.push("  " + prefix + key + ": " + c[key] + ";");
         });
-        Object.keys(pack.spacing || {}).forEach(function (key) {
-          lines.push("  " + prefix + "space-" + key + ": " + pack.spacing[key] + ";");
+        Object.keys(packObj.spacing || {}).forEach(function (key) {
+          lines.push("  " + prefix + "space-" + key + ": " + packObj.spacing[key] + ";");
         });
-        Object.keys(pack.rounded || {}).forEach(function (key) {
-          lines.push("  " + prefix + "radius-" + key + ": " + pack.rounded[key] + ";");
+        Object.keys(packObj.rounded || {}).forEach(function (key) {
+          lines.push("  " + prefix + "radius-" + key + ": " + packObj.rounded[key] + ";");
         });
-        Object.keys(pack.typography || {}).forEach(function (role) {
-          var spec = pack.typography[role];
+        Object.keys(packObj.typography || {}).forEach(function (role) {
+          var spec = packObj.typography[role];
           if (!spec || typeof spec !== "object") return;
           Object.keys(spec).forEach(function (field) {
             lines.push("  " + prefix + "font-" + role + "-" + tokenSlug(field) + ": " + spec[field] + ";");
@@ -901,14 +1053,14 @@
         lines.push("@theme {");
         colorKeys.forEach(function (key) { lines.push("  --color-pt-" + key + ": " + c[key] + ";"); });
         Object.keys(surfaces).forEach(function (sk) { lines.push("  --color-pt-" + sk + ": " + surfaces[sk] + ";"); });
-        Object.keys(pack.spacing || {}).forEach(function (key) {
-          lines.push("  --pt-space-" + key + ": " + pack.spacing[key] + ";");
+        Object.keys(packObj.spacing || {}).forEach(function (key) {
+          lines.push("  --pt-space-" + key + ": " + packObj.spacing[key] + ";");
         });
-        Object.keys(pack.rounded || {}).forEach(function (key) {
-          lines.push("  --pt-radius-" + key + ": " + pack.rounded[key] + ";");
+        Object.keys(packObj.rounded || {}).forEach(function (key) {
+          lines.push("  --pt-radius-" + key + ": " + packObj.rounded[key] + ";");
         });
-        Object.keys(pack.typography || {}).forEach(function (role) {
-          var spec = pack.typography[role];
+        Object.keys(packObj.typography || {}).forEach(function (role) {
+          var spec = packObj.typography[role];
           if (!spec || typeof spec !== "object") return;
           Object.keys(spec).forEach(function (field) {
             lines.push("  --pt-font-" + role + "-" + tokenSlug(field) + ": " + spec[field] + ";");
@@ -917,8 +1069,8 @@
         lines.push("}");
       } else if (tokenState.exportMode === "dtcg") {
         var typoObj = {};
-        Object.keys(pack.typography || {}).forEach(function (role) {
-          var p = pack.typography[role];
+        Object.keys(packObj.typography || {}).forEach(function (role) {
+          var p = packObj.typography[role];
           typoObj[role] = {
             $type: "typography",
             $value: {
@@ -934,7 +1086,7 @@
         });
         var dtcg = {
           $description: "Premium Taste starter token pack — " + tokenState.packName + " (" + tokenState.packId + ")",
-          $extensions: { "premium-taste": { direction: tokenState.packId, scale: pack.scale || {}, opentype: pack.opentype || {} } },
+          $extensions: { "premium-taste": { direction: tokenState.packId, scale: packObj.scale || {}, opentype: packObj.opentype || {} } },
           color: {},
           surface: {},
           typography: typoObj,
@@ -942,14 +1094,14 @@
         };
         colorKeys.forEach(function (key) { dtcg.color[key] = { $type: "color", $value: c[key] }; });
         Object.keys(surfaces).forEach(function (sk) { dtcg.surface[sk] = { $type: "color", $value: surfaces[sk] }; });
-        Object.keys(pack.spacing || {}).forEach(function (sp) { dtcg.dimension.spacing[sp] = { $type: "dimension", $value: pack.spacing[sp] }; });
-        Object.keys(pack.rounded || {}).forEach(function (rd) { dtcg.dimension.radius[rd] = { $type: "dimension", $value: pack.rounded[rd] }; });
+        Object.keys(packObj.spacing || {}).forEach(function (sp) { dtcg.dimension.spacing[sp] = { $type: "dimension", $value: packObj.spacing[sp] }; });
+        Object.keys(packObj.rounded || {}).forEach(function (rd) { dtcg.dimension.radius[rd] = { $type: "dimension", $value: packObj.rounded[rd] }; });
         tokenExportCode.textContent = JSON.stringify(dtcg, null, 2);
         return;
       } else if (tokenState.exportMode === "design") {
-        var scaleObj = pack.scale || {};
-        var otObj = pack.opentype || {};
-        var typoRoles = pack.typography || {};
+        var scaleObj = packObj.scale || {};
+        var otObj = packObj.opentype || {};
+        var typoRoles = packObj.typography || {};
         if (tokenState.verbosity === "compact") {
           lines.push("# " + tokenState.packName + " (`" + tokenState.packId + "`) — Compact DESIGN.md");
           lines.push("");
@@ -964,7 +1116,7 @@
             var tp = typoRoles[rk];
             lines.push("- `" + rk + "`: " + String(tp.fontFamily || "").split(",")[0] + " · " + tp.fontSize + " / " + tp.lineHeight + " · w" + tp.fontWeight + " · ls " + (tp.letterSpacing || "0em") + (tp.fontStyle ? " · " + tp.fontStyle : ""));
           });
-          var guardrails = (pack.dosDonts || []).slice(0, 4);
+          var guardrails = (packObj.dosDonts || []).slice(0, 4);
           if (guardrails.length) {
             lines.push("", "## Key Guardrails");
             guardrails.forEach(function (g) { lines.push("- " + g); });
@@ -987,30 +1139,30 @@
             lines.push("  " + rk + ":");
             Object.keys(tp).forEach(function (prop) { lines.push("    " + prop + ': "' + tp[prop] + '"'); });
           });
-          if (pack.rounded) {
+          if (packObj.rounded) {
             lines.push("rounded:");
-            Object.keys(pack.rounded).forEach(function (key) { lines.push("  " + key + ": " + pack.rounded[key]); });
+            Object.keys(packObj.rounded).forEach(function (key) { lines.push("  " + key + ": " + packObj.rounded[key]); });
           }
-          if (pack.spacing) {
+          if (packObj.spacing) {
             lines.push("spacing:");
-            Object.keys(pack.spacing).forEach(function (key) { lines.push("  " + key + ": " + pack.spacing[key]); });
+            Object.keys(packObj.spacing).forEach(function (key) { lines.push("  " + key + ": " + packObj.spacing[key]); });
           }
-          if (pack.imagery) {
+          if (packObj.imagery) {
             lines.push("imagery:");
-            Object.keys(pack.imagery).forEach(function (key) { lines.push("  " + key + ": " + pack.imagery[key]); });
+            Object.keys(packObj.imagery).forEach(function (key) { lines.push("  " + key + ": " + packObj.imagery[key]); });
           }
           lines.push("---");
-          var srvs = pack.surfaceRows || [];
+          var srvs = packObj.surfaceRows || [];
           if (srvs.length) {
             lines.push("", "## Surfaces", "| Step | Token | Hex | Purpose |", "| --- | --- | --- | --- |");
             srvs.forEach(function (r) { lines.push("| " + r.step + " | `" + r.token + "` | `" + r.hex + "` | " + r.purpose + " |"); });
           }
-          var prompts = pack.agentPrompts || [];
+          var prompts = packObj.agentPrompts || [];
           if (prompts.length) {
             lines.push("", "## Agent Prompt Guide");
             prompts.forEach(function (p, i) { lines.push((i + 1) + ". " + p); });
           }
-          var dd = pack.dosDonts || [];
+          var dd = packObj.dosDonts || [];
           if (dd.length) {
             lines.push("", "## Do's and Don'ts");
             dd.forEach(function (d) { lines.push("- " + d); });
@@ -1078,19 +1230,47 @@
         var pack = (DATA.tokens && DATA.tokens[d.id]) || {};
         var cols = pack.colors || {};
         var bg = cols.surface || "#f5f5f2";
+        var raised = cols["surface-raised"] || "#ffffff";
         var ink = cols.ink || "#1b1d1c";
+        var mutedInk = cols["ink-muted"] || ink;
         var accent = cols.accent || "#1e5c40";
-        var onAccent = cols["on-accent"] || (d.id === "editorial-print" ? "#f6f1e8" : "#ffffff");
-        var borderStyle = d.id === "cinematic-dark" ? "#2a2825" : (cols.hairline || "#e2e2da");
+        var hairline = d.id === "cinematic-dark" ? "#2a2825" : (cols.hairline || "#e2e2da");
+        var lineStrong = cols.line || hairline;
+        var jobsSummary = (d.jobs || []).slice(0, 2).join(" · ");
+        var swatches = [
+          { name: "surface", hex: bg },
+          { name: "surface-raised", hex: raised },
+          { name: "ink", hex: ink },
+          { name: "accent", hex: accent },
+        ]
+          .map(function (sw) {
+            return '<span class="dir-swatch" title="' + escapeHtml(sw.name + " " + sw.hex) + '" style="background:' + escapeHtml(sw.hex) + ";border-color:" + escapeHtml(lineStrong) + ';"></span>';
+          })
+          .join("");
+
         return (
-          '<article class="dir-tile" style="background:' + escapeHtml(bg) + ";color:" + escapeHtml(ink) + ";border-color:" + escapeHtml(borderStyle) + ';">' +
+          '<article class="dir-tile" style="background:' + escapeHtml(bg) + ";color:" + escapeHtml(ink) + ";border-color:" + escapeHtml(hairline) + ';">' +
+          '<div class="dir-tile-body">' +
+          '<div class="dir-tile-head">' +
           '<div class="dir-tile-top">' +
           "<h3>" + escapeHtml(d.id) + "</h3>" +
-          '<span class="dir-tile-tag">' + escapeHtml(pack.name || "") + " · " + escapeHtml(d.density || "") + "</span>" +
+          '<span class="dir-tile-tag" style="color:' + escapeHtml(mutedInk) + ';">' + escapeHtml(pack.name || d.name || "") + " · " + escapeHtml((pack.scale && pack.scale.name) || "Modular") + "</span>" +
           "</div>" +
-          '<p class="dir-tile-desc">' + escapeHtml(d.summary || "") + "</p>" +
-          '<p class="dir-tile-rule"><strong>First screen:</strong> ' + escapeHtml(d.first_screen || "") + "</p>" +
-          '<button type="button" class="dir-tile-btn" data-use-tokens="' + escapeHtml(d.id) + '" style="background:' + escapeHtml(accent) + ";color:" + escapeHtml(onAccent) + ';">Load palette in Token Studio →</button>' +
+          '<div class="dir-swatches" aria-hidden="true">' + swatches + "</div>" +
+          "</div>" +
+          '<p class="dir-tile-desc">' + escapeHtml(capitalizeFirst(d.temperature || d.density || "")) + "</p>" +
+          '<p class="dir-tile-rule" style="border-color:' + escapeHtml(hairline) + ";color:" + escapeHtml(mutedInk) + ';">' +
+          '<span class="dir-tile-rule-label" style="color:' + escapeHtml(ink) + ';">First screen</span>' +
+          escapeHtml(d.first_screen || "") +
+          "</p>" +
+          "</div>" +
+          '<div class="dir-tile-foot">' +
+          '<span class="dir-tile-jobs" style="color:' + escapeHtml(mutedInk) + ';">' + escapeHtml(jobsSummary) + "</span>" +
+          '<button type="button" class="dir-tile-btn" data-use-tokens="' + escapeHtml(d.id) + '" style="color:' + escapeHtml(ink) + ";border-color:" + escapeHtml(lineStrong) + ';">' +
+          '<span class="dir-btn-dot" aria-hidden="true" style="background:' + escapeHtml(accent) + ';"></span>' +
+          "Load in Token Studio →" +
+          "</button>" +
+          "</div>" +
           "</article>"
         );
       })
@@ -1134,19 +1314,20 @@
 
       refListEl.innerHTML = patterns
         .map(function (p) {
-          var layout = (p.layout || []).map(function (s) { return "<li>" + escapeHtml(s) + "</li>"; }).join("");
-          var states = (p.states || []).map(function (s) { return "<li>" + escapeHtml(s) + "</li>"; }).join("");
-          var refuse = (p.refuse || []).map(function (s) { return "<li>" + escapeHtml(s) + "</li>"; }).join("");
-          var litmus = (p.litmus || []).map(function (s) { return "<li>" + escapeHtml(s) + "</li>"; }).join("");
+          var layout = (p.layout || []).map(function (s) { return "<li>" + formatInlineProse(s) + "</li>"; }).join("");
+          var states = (p.states || []).map(function (s) { return "<li>" + formatInlineProse(s) + "</li>"; }).join("");
+          var refuse = (p.refuse || []).map(function (s) { return "<li>" + formatInlineProse(s) + "</li>"; }).join("");
+          var litmus = (p.litmus || []).map(function (s) { return "<li>" + formatInlineProse(s) + "</li>"; }).join("");
           return (
             '<div class="ref-row">' +
             '<button type="button" class="ref-btn" aria-expanded="false" aria-controls="pat-drawer-' + escapeHtml(p.id) + '">' +
             '<span class="ref-name">' + escapeHtml(p.title) + "</span>" +
             '<span class="ref-job">' + escapeHtml(p.job) + "</span>" +
             '<span class="ref-dir">' + escapeHtml(p.type + " · " + (p.directions || []).join(", ")) + "</span>" +
+            '<span class="ref-chevron" aria-hidden="true">+</span>' +
             "</button>" +
             '<div class="ref-drawer" id="pat-drawer-' + escapeHtml(p.id) + '" hidden>' +
-            '<p style="margin:0;color:var(--muted);">' + escapeHtml(p.summary || "") + "</p>" +
+            '<p style="margin:0;color:var(--muted);">' + formatInlineProse(p.summary || "") + "</p>" +
             '<div class="ref-drawer-cols">' +
             "<div><strong>Layout &amp; States</strong><ul>" + layout + states + "</ul></div>" +
             "<div><strong>Refuse &amp; Litmus</strong><ul>" + refuse + litmus + "</ul></div>" +
@@ -1170,17 +1351,18 @@
 
       refListEl.innerHTML = items
         .map(function (r) {
-          var steal = (r.steal || []).map(function (s) { return "<li>" + escapeHtml(s) + "</li>"; }).join("");
-          var avoid = (r.avoid || []).map(function (a) { return "<li>" + escapeHtml(a) + "</li>"; }).join("");
+          var steal = (r.steal || []).map(function (s) { return "<li>" + formatInlineProse(s) + "</li>"; }).join("");
+          var avoid = (r.avoid || []).map(function (a) { return "<li>" + formatInlineProse(a) + "</li>"; }).join("");
           return (
             '<div class="ref-row">' +
             '<button type="button" class="ref-btn" aria-expanded="false" aria-controls="ref-drawer-' + escapeHtml(r.id) + '">' +
             '<span class="ref-name">' + escapeHtml(r.title) + "</span>" +
             '<span class="ref-job">' + escapeHtml(r.job) + "</span>" +
             '<span class="ref-dir">' + escapeHtml(r.direction) + "</span>" +
+            '<span class="ref-chevron" aria-hidden="true">+</span>' +
             "</button>" +
             '<div class="ref-drawer" id="ref-drawer-' + escapeHtml(r.id) + '" hidden>' +
-            '<p style="margin:0;color:var(--muted);">' + escapeHtml(r.summary || "") + "</p>" +
+            '<p style="margin:0;color:var(--muted);">' + formatInlineProse(r.summary || "") + "</p>" +
             '<div class="ref-drawer-cols">' +
             "<div><strong>What to steal</strong><ul>" + steal + "</ul></div>" +
             "<div><strong>What not to copy</strong><ul>" + avoid + "</ul></div>" +
@@ -1199,6 +1381,8 @@
       if (!btn || !refListEl.contains(btn)) return;
       var open = btn.getAttribute("aria-expanded") === "true";
       btn.setAttribute("aria-expanded", open ? "false" : "true");
+      var chev = btn.querySelector(".ref-chevron");
+      if (chev) chev.textContent = open ? "+" : "−";
       var drawer = document.getElementById(btn.getAttribute("aria-controls"));
       if (drawer) drawer.hidden = open;
     });
